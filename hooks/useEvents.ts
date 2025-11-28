@@ -59,7 +59,6 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'events' },
         (payload) => {
-          console.log('New event:', payload.new);
           setEvents(prev => {
             // 중복 체크
             if (prev.some(e => e.id === payload.new.id)) return prev;
@@ -71,7 +70,6 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'events' },
         (payload) => {
-          console.log('Updated event:', payload.new);
           setEvents(prev => prev.map(e => e.id === payload.new.id ? payload.new as Event : e));
         }
       )
@@ -79,7 +77,6 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'events' },
         (payload) => {
-          console.log('Deleted event:', payload.old);
           setEvents(prev => prev.filter(e => e.id !== payload.old.id));
         }
       )
@@ -93,7 +90,7 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
         supabase.removeChannel(channelRef.current);
       }
     };
-  }, [month]);
+  }, [fetchEvents]);
 
   const createEvent = async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -115,15 +112,15 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
       if (!res.ok) {
         // 롤백
         setEvents(prev => prev.filter(e => e.id !== tempEvent.id));
-        const error = await res.json();
-        return { success: false, error: error.error };
+        const errorData = await res.json();
+        return { success: false, error: errorData.error };
       }
 
       const newEvent = await res.json();
       // 임시 이벤트를 실제 이벤트로 교체
       setEvents(prev => prev.map(e => e.id === tempEvent.id ? newEvent : e));
       return { success: true, data: newEvent };
-    } catch (error) {
+    } catch {
       await fetchEvents(); // 롤백
       return { success: false, error: '이벤트 생성에 실패했습니다.' };
     }
@@ -143,14 +140,14 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
 
       if (!res.ok) {
         setEvents(originalEvents); // 롤백
-        const error = await res.json();
-        return { success: false, error: error.error };
+        const errorData = await res.json();
+        return { success: false, error: errorData.error };
       }
 
       const updatedEvent = await res.json();
       setEvents(prev => prev.map(e => e.id === id ? updatedEvent : e));
       return { success: true, data: updatedEvent };
-    } catch (error) {
+    } catch {
       await fetchEvents(); // 롤백
       return { success: false, error: '이벤트 수정에 실패했습니다.' };
     }
@@ -168,12 +165,12 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
 
       if (!res.ok) {
         setEvents(originalEvents); // 롤백
-        const error = await res.json();
-        return { success: false, error: error.error };
+        const errorData = await res.json();
+        return { success: false, error: errorData.error };
       }
 
       return { success: true };
-    } catch (error) {
+    } catch {
       await fetchEvents(); // 롤백
       return { success: false, error: '이벤트 삭제에 실패했습니다.' };
     }

@@ -121,18 +121,18 @@ export default function EventFormModal({
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
       {/* 모바일: 전체 화면 */}
-      <div className="md:hidden fixed inset-0 bg-white z-50 overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-4 py-3 flex justify-between items-center">
-          <button onClick={onClose} className="p-2 -ml-2">
+      <div className="md:hidden fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-y-auto">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-4 py-3 flex justify-between items-center">
+          <button onClick={onClose} className="p-2 -ml-2 dark:text-white">
             <X size={24} />
           </button>
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold dark:text-white">
             {event ? '일정 수정' : '새 일정'}
           </h2>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting || !title.trim()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
           >
             {isSubmitting ? '저장 중...' : '저장'}
           </button>
@@ -162,12 +162,12 @@ export default function EventFormModal({
       </div>
 
       {/* 데스크탑: 중앙 모달 */}
-      <div className="hidden md:block bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto z-50">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-semibold">
+      <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto z-50">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold dark:text-white">
             {event ? '일정 수정' : '새 일정'}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full dark:text-white">
             <X size={20} />
           </button>
         </div>
@@ -196,14 +196,14 @@ export default function EventFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3 border border-gray-300 dark:border-gray-600 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors dark:text-white"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className="flex-1 py-3 bg-blue-500 text-white rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+              className="flex-1 py-3 bg-blue-500 text-white rounded-lg font-medium disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
             >
               {isSubmitting ? '저장 중...' : '저장'}
             </button>
@@ -259,7 +259,7 @@ function FormContent({
     <>
       {/* 제목 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           제목 *
         </label>
         <input
@@ -267,21 +267,21 @@ function FormContent({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="일정 제목을 입력하세요"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
           required
         />
       </div>
 
       {/* 날짜 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           날짜
         </label>
         <input
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
         />
       </div>
 
@@ -294,7 +294,7 @@ function FormContent({
           onChange={(e) => setIsAllDay(e.target.checked)}
           className="w-5 h-5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
         />
-        <label htmlFor="isAllDay" className="text-sm font-medium text-gray-700">
+        <label htmlFor="isAllDay" className="text-sm font-medium text-gray-700 dark:text-gray-300">
           종일 일정
         </label>
       </div>
@@ -303,25 +303,25 @@ function FormContent({
       {!isAllDay && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               시작 시간
             </label>
             <input
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               종료 시간
             </label>
             <input
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
             />
           </div>
         </div>
@@ -329,7 +329,7 @@ function FormContent({
 
       {/* 카테고리 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           카테고리
         </label>
         <div className="flex flex-wrap gap-2">
@@ -341,7 +341,7 @@ function FormContent({
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors min-h-[44px] ${
                 category === cat
                   ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               {cat}
@@ -375,7 +375,7 @@ function FormContent({
 
       {/* 색상 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           색상
         </label>
         <div className="flex gap-3">
@@ -386,7 +386,7 @@ function FormContent({
               onClick={() => setColorTag(color.value)}
               className={`w-10 h-10 rounded-full border-2 transition-transform ${
                 colorTag === color.value
-                  ? 'border-gray-800 scale-110'
+                  ? 'border-gray-800 dark:border-white scale-110'
                   : 'border-transparent hover:scale-105'
               }`}
               style={{ backgroundColor: color.value }}
@@ -398,7 +398,7 @@ function FormContent({
 
       {/* 설명 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           설명
         </label>
         <textarea
@@ -406,7 +406,7 @@ function FormContent({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="일정에 대한 설명을 입력하세요"
           rows={4}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-white dark:bg-gray-700 dark:text-white"
         />
       </div>
     </>

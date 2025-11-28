@@ -20,7 +20,7 @@ export default function CalendarGrid({ events, selectedDate, onDateSelect, onMon
     return (
         <div className="w-full">
             {/* Desktop: Full Calendar */}
-            <div className="hidden md:block p-4 bg-white rounded-lg shadow calendar-weekend">
+            <div className="hidden md:block p-4 bg-white dark:bg-gray-800 rounded-lg shadow calendar-weekend">
                 <DayPicker
                     mode="single"
                     selected={selectedDate}
@@ -29,7 +29,7 @@ export default function CalendarGrid({ events, selectedDate, onDateSelect, onMon
                     locale={ko}
                     modifiers={{ hasEvent: eventDates }}
                     modifiersClassNames={{
-                        hasEvent: 'bg-blue-100 font-bold text-blue-600',
+                        hasEvent: 'bg-blue-100 dark:bg-blue-900 font-bold text-blue-600 dark:text-blue-300',
                         selected: 'bg-blue-500 text-white hover:bg-blue-600',
                     }}
                     className="mx-auto"

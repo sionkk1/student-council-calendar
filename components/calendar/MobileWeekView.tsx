@@ -43,25 +43,25 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
         const day = getDay(date);
         if (day === 0) return 'text-red-500'; // 일요일
         if (day === 6) return 'text-blue-500'; // 토요일
-        return '';
+        return 'dark:text-gray-200';
     };
 
     return (
-        <div className="w-full bg-white shadow-sm rounded-b-xl pb-2">
+        <div className="w-full bg-white dark:bg-gray-800 shadow-sm rounded-b-xl pb-2">
             <div className="flex items-center justify-between p-4">
-                <h2 className="text-lg font-bold">
+                <h2 className="text-lg font-bold dark:text-white">
                     {format(displayMonth, 'yyyy년 M월', { locale: ko })}
                 </h2>
                 <div className="flex gap-2">
                     <button
                         onClick={() => handleWeekChange(subWeeks(currentWeekStart, 1))}
-                        className="p-2 hover:bg-gray-100 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center dark:text-white"
                     >
                         <ChevronLeft size={20} />
                     </button>
                     <button
                         onClick={() => handleWeekChange(addWeeks(currentWeekStart, 1))}
-                        className="p-2 hover:bg-gray-100 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center dark:text-white"
                     >
                         <ChevronRight size={20} />
                     </button>
@@ -82,7 +82,7 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
                             onClick={() => onDateSelect(date)}
                             className={cn(
                                 "flex flex-col items-center justify-center p-2 rounded-lg min-h-[60px] transition-colors",
-                                isSelected ? "bg-blue-500" : "hover:bg-gray-50 dark:hover:bg-gray-800",
+                                isSelected ? "bg-blue-500" : "hover:bg-gray-50 dark:hover:bg-gray-700",
                                 hasEvent && !isSelected && "bg-blue-50 dark:bg-blue-900/30"
                             )}
                         >
@@ -94,7 +94,7 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
                             </span>
                             <span className={cn(
                                 "text-sm font-medium w-8 h-8 flex items-center justify-center rounded-full",
-                                isSameDay(date, new Date()) && !isSelected && "bg-gray-100 dark:bg-gray-700",
+                                isSameDay(date, new Date()) && !isSelected && "bg-gray-100 dark:bg-gray-600",
                                 isSelected ? "text-white" : dayColor
                             )}>
                                 {format(date, 'd')}

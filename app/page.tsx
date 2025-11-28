@@ -22,12 +22,12 @@ const DEPARTMENTS = ['회장단', '자치기획실', '문화체육부', '창의�
 // 인라인 스켈레톤 컴포넌트
 function EventSkeleton() {
   return (
-    <div className="animate-pulse bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+    <div className="animate-pulse bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
       <div className="flex items-start gap-3">
-        <div className="w-1 h-12 bg-gray-200 rounded-full" />
+        <div className="w-1 h-12 bg-gray-200 dark:bg-gray-600 rounded-full" />
         <div className="flex-1 space-y-2">
-          <div className="h-4 bg-gray-200 rounded w-3/4" />
-          <div className="h-3 bg-gray-200 rounded w-1/2" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4" />
+          <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2" />
         </div>
       </div>
     </div>
@@ -151,11 +151,11 @@ export default function Home() {
   }, [events, selectedCategories, selectedDepartments]);
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white border-b px-4 py-4 sticky top-0 z-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
+      <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-4 py-4 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="w-10" /> {/* 균형을 위한 빈 공간 */}
-          <h1 className="text-lg font-bold text-center flex-1">학생자치회 일정</h1>
+          <h1 className="text-lg font-bold text-center flex-1 dark:text-white">학생자치회 일정</h1>
           <ThemeToggle />
         </div>
       </header>
@@ -195,7 +195,7 @@ export default function Home() {
         {/* 선택된 날짜의 일정 목록 */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-lg font-semibold dark:text-white">
               {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 일정
             </h2>
             {isAdmin && (
@@ -225,7 +225,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-10 text-gray-400 bg-white rounded-xl border border-dashed">
+            <div className="text-center py-10 text-gray-400 bg-white dark:bg-gray-800 rounded-xl border border-dashed dark:border-gray-700">
               일정이 없습니다.
             </div>
           )}
