@@ -16,7 +16,9 @@ export async function POST(request: NextRequest) {
         }
 
         const date = new Date();
-        const filePath = `${date.getFullYear()}/${date.getMonth() + 1}/${eventId}/${Date.now()}_${file.name}`;
+        // 파일명에서 특수문자 제거하고 안전한 이름 생성
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9가-힣._-]/g, '_');
+        const filePath = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${eventId}/${Date.now()}_${safeFileName}`;
 
         const arrayBuffer = await file.arrayBuffer();
         const { error: uploadError } = await supabaseAdmin.storage
