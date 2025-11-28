@@ -15,7 +15,7 @@ interface MobileWeekViewProps {
 }
 
 export default function MobileWeekView({ selectedDate, events, onDateSelect, onMonthChange }: MobileWeekViewProps) {
-    const [currentWeekStart, setCurrentWeekStart] = useState(() => 
+    const [currentWeekStart, setCurrentWeekStart] = useState(() =>
         startOfWeek(selectedDate, { weekStartsOn: 0 })
     );
 
@@ -39,10 +39,10 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
         if (newWeekStart.getTime() !== currentWeekStart.getTime()) {
             setCurrentWeekStart(newWeekStart);
         }
-    }, [selectedDate, currentWeekStart]);
+    }, [selectedDate]);
 
     const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(currentWeekStart, i));
-    
+
     // 주의 중간(수요일)을 기준으로 월 표시
     const displayMonth = addDays(currentWeekStart, 3);
 

@@ -126,15 +126,15 @@ export default function Home() {
     return events.filter(event => {
       const eventDate = new Date(event.start_time);
       const dateMatch = eventDate.toDateString() === selectedDate.toDateString();
-      
+
       // 카테고리 필터: 선택된 것이 없으면 전체, 있으면 해당 카테고리만
-      const categoryMatch = selectedCategories.length === 0 || 
+      const categoryMatch = selectedCategories.length === 0 ||
         (event.category && selectedCategories.includes(event.category));
-      
+
       // 부서 필터: 선택된 것이 없으면 전체, 있으면 교집합 확인
-      const departmentMatch = selectedDepartments.length === 0 || 
+      const departmentMatch = selectedDepartments.length === 0 ||
         (event.departments && event.departments.some(d => selectedDepartments.includes(d)));
-      
+
       return dateMatch && categoryMatch && departmentMatch;
     });
   }, [events, selectedDate, selectedCategories, selectedDepartments]);
@@ -142,16 +142,16 @@ export default function Home() {
   // 캘린더에 표시할 이벤트 (카테고리 + 부서 필터 적용)
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
-      const categoryMatch = selectedCategories.length === 0 || 
+      const categoryMatch = selectedCategories.length === 0 ||
         (event.category && selectedCategories.includes(event.category));
-      const departmentMatch = selectedDepartments.length === 0 || 
+      const departmentMatch = selectedDepartments.length === 0 ||
         (event.departments && event.departments.some(d => selectedDepartments.includes(d)));
       return categoryMatch && departmentMatch;
     });
   }, [events, selectedCategories, selectedDepartments]);
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
+    <main className="min-h-screen bg-white dark:bg-gray-900 pb-20">
       <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-4 py-4 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="w-10" /> {/* 균형을 위한 빈 공간 */}

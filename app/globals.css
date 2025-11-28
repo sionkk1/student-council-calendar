@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #f9fafb;
+  --color-background: #ffffff;
   --color-foreground: #171717;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -14,12 +14,12 @@
 
 /* 라이트모드 기본값 */
 html {
-  background-color: #f9fafb;
+  background-color: #ffffff;
   color: #171717;
 }
 
 body {
-  background-color: #f9fafb;
+  background-color: #ffffff;
   color: #171717;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
@@ -178,6 +178,7 @@ html.dark body {
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
