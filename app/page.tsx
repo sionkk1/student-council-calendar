@@ -15,7 +15,7 @@ import { Plus } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 
 // 카테고리 목록
-const CATEGORIES = ['전체', '회의', '행사', '공지', '기타'];
+const CATEGORIES = ['전체', '회의', '행사', '공지', '학교', '기타'];
 
 // 인라인 스켈레톤 컴포넌트
 function EventSkeleton() {

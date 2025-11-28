@@ -13,7 +13,7 @@ interface EventFormModalProps {
   onSubmit: (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
 }
 
-const CATEGORIES = ['회의', '행사', '공지', '기타'];
+const CATEGORIES = ['회의', '행사', '공지', '학교', '기타'];
 const COLORS = [
   { name: '파랑', value: '#3b82f6' },
   { name: '빨강', value: '#ef4444' },

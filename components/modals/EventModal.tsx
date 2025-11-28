@@ -144,12 +144,17 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
                         onDownload={handleDownload}
                         onDelete={handleDeleteMinute}
                     />
-                    {isAdmin && (
+                    {isAdmin && !event.is_school_event && (
                         <AdminActions
                             event={event}
                             onEdit={onEdit}
                             onDelete={onDelete}
                         />
+                    )}
+                    {event.is_school_event && (
+                        <div className="text-center text-sm text-gray-400 pt-4 border-t">
+                            🏫 학교 공식 일정 (수정 불가)
+                        </div>
                     )}
                 </div>
             </div>
@@ -172,12 +177,17 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
                         onDownload={handleDownload}
                         onDelete={handleDeleteMinute}
                     />
-                    {isAdmin && (
+                    {isAdmin && !event.is_school_event && (
                         <AdminActions
                             event={event}
                             onEdit={onEdit}
                             onDelete={onDelete}
                         />
+                    )}
+                    {event.is_school_event && (
+                        <div className="text-center text-sm text-gray-400 pt-4 border-t">
+                            🏫 학교 공식 일정 (수정 불가)
+                        </div>
                     )}
                 </div>
             </div>
