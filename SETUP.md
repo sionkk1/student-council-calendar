@@ -259,6 +259,46 @@ END:VCALENDAR`, {
 }
 ```
 
+#### `app/api/announcement/route.ts` (공지)
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+export async function GET() {
+  const { data } = await supabaseAdmin
+    .from('announcements')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+  
+  return NextResponse.json(data);
+}
+
+export async function POST(request: NextRequest) {
+  const { content } = await request.json();
+  
+  // 기존 공지 삭제
+  await supabaseAdmin.from('announcements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  
+  // 새 공지 추가
+  const { data, error } = await supabaseAdmin
+    .from('announcements')
+    .insert({ content })
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
+
+export async function DELETE() {
+  await supabaseAdmin.from('announcements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  return NextResponse.json({ success: true });
+}
+```
+
 ### 4. Supabase 설정
 
 Supabase 대시보드에서 SQL Editor를 열고 다음 쿼리를 실행하세요:
@@ -288,16 +328,25 @@ CREATE TABLE IF NOT EXISTS meeting_minutes (
   uploaded_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- announcements 테이블 생성
+CREATE TABLE IF NOT EXISTS announcements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_events_start_time ON events(start_time);
 
 -- RLS 활성화
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE meeting_minutes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
 
 -- 모든 작업 허용 정책
 CREATE POLICY "Allow all on events" ON events FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on meeting_minutes" ON meeting_minutes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on announcements" ON announcements FOR ALL USING (true) WITH CHECK (true);
 
 -- 실시간 동기화를 위한 Publication 설정
 ALTER PUBLICATION supabase_realtime ADD TABLE events;

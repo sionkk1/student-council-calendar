@@ -8,6 +8,7 @@ import EnigmaInput from '@/components/admin/EnigmaInput';
 import AdminBar from '@/components/admin/AdminBar';
 import EventCard from '@/components/calendar/EventCard';
 import CategoryFilter from '@/components/calendar/CategoryFilter';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useEvents } from '@/hooks/useEvents';
 import { Event } from '@/types';
@@ -130,6 +131,9 @@ export default function Home() {
 
       {/* 관리자 상태 바 */}
       {isAdmin && <AdminBar onLogout={logout} />}
+
+      {/* 공지 배너 */}
+      <AnnouncementBanner isAdmin={isAdmin} />
 
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         <CalendarGrid
