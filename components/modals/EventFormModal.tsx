@@ -37,7 +37,7 @@ export default function EventFormModal({
   const [endTime, setEndTime] = useState('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [category, setCategory] = useState('');
-  const [department, setDepartment] = useState('');
+  const [departments, setDepartments] = useState<string[]>([]);
   const [colorTag, setColorTag] = useState('#3b82f6');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,7 +53,7 @@ export default function EventFormModal({
         setEndTime(event.end_time ? format(new Date(event.end_time), 'HH:mm') : '');
         setIsAllDay(event.is_all_day);
         setCategory(event.category || '');
-        setDepartment(event.department || '');
+        setDepartments(event.departments || []);
         setColorTag(event.color_tag || '#3b82f6');
       } else {
         // 생성 모드
@@ -64,7 +64,7 @@ export default function EventFormModal({
         setEndTime('10:00');
         setIsAllDay(false);
         setCategory('');
-        setDepartment('');
+        setDepartments([]);
         setColorTag('#3b82f6');
       }
     }
@@ -106,7 +106,7 @@ export default function EventFormModal({
         end_time: endDateTime?.toISOString(),
         is_all_day: isAllDay,
         category: category || undefined,
-        department: department || undefined,
+        departments: departments.length > 0 ? departments : undefined,
         color_tag: colorTag,
       });
     } finally {
@@ -153,8 +153,8 @@ export default function EventFormModal({
             setIsAllDay={setIsAllDay}
             category={category}
             setCategory={setCategory}
-            department={department}
-            setDepartment={setDepartment}
+            departments={departments}
+            setDepartments={setDepartments}
             colorTag={colorTag}
             setColorTag={setColorTag}
           />
@@ -187,8 +187,8 @@ export default function EventFormModal({
             setIsAllDay={setIsAllDay}
             category={category}
             setCategory={setCategory}
-            department={department}
-            setDepartment={setDepartment}
+            departments={departments}
+            setDepartments={setDepartments}
             colorTag={colorTag}
             setColorTag={setColorTag}
           />
@@ -229,8 +229,8 @@ interface FormContentProps {
   setIsAllDay: (v: boolean) => void;
   category: string;
   setCategory: (v: string) => void;
-  department: string;
-  setDepartment: (v: string) => void;
+  departments: string[];
+  setDepartments: (v: string[]) => void;
   colorTag: string;
   setColorTag: (v: string) => void;
 }
@@ -243,9 +243,18 @@ function FormContent({
   endTime, setEndTime,
   isAllDay, setIsAllDay,
   category, setCategory,
-  department, setDepartment,
+  departments, setDepartments,
   colorTag, setColorTag,
 }: FormContentProps) {
+  
+  const toggleDepartment = (dept: string) => {
+    if (departments.includes(dept)) {
+      setDepartments(departments.filter(d => d !== dept));
+    } else {
+      setDepartments([...departments, dept]);
+    }
+  };
+  
   return (
     <>
       {/* 제목 */}
@@ -341,21 +350,21 @@ function FormContent({
         </div>
       </div>
 
-      {/* 부서 */}
+      {/* 부서 (다중 선택) */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          부서
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          부서 (다중 선택 가능)
         </label>
         <div className="flex flex-wrap gap-2">
           {DEPARTMENTS.map((dept) => (
             <button
               key={dept}
               type="button"
-              onClick={() => setDepartment(dept === department ? '' : dept)}
+              onClick={() => toggleDepartment(dept)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors min-h-[36px] ${
-                department === dept
+                departments.includes(dept)
                   ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
               }`}
             >
               {dept}

@@ -111,7 +111,8 @@ export default function Home() {
       const eventDate = new Date(event.start_time);
       const dateMatch = eventDate.toDateString() === selectedDate.toDateString();
       const categoryMatch = selectedCategory === '전체' || event.category === selectedCategory;
-      const departmentMatch = selectedDepartment === '전체' || event.department === selectedDepartment;
+      const departmentMatch = selectedDepartment === '전체' || 
+        (event.departments && event.departments.includes(selectedDepartment));
       return dateMatch && categoryMatch && departmentMatch;
     });
   }, [events, selectedDate, selectedCategory, selectedDepartment]);
@@ -120,7 +121,8 @@ export default function Home() {
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
       const categoryMatch = selectedCategory === '전체' || event.category === selectedCategory;
-      const departmentMatch = selectedDepartment === '전체' || event.department === selectedDepartment;
+      const departmentMatch = selectedDepartment === '전체' || 
+        (event.departments && event.departments.includes(selectedDepartment));
       return categoryMatch && departmentMatch;
     });
   }, [events, selectedCategory, selectedDepartment]);

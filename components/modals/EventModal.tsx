@@ -335,7 +335,7 @@ function EventContent({ event }: { event: Event }) {
                 </div>
             )}
 
-            {(event.category || event.department) && (
+            {(event.category || (event.departments && event.departments.length > 0)) && (
                 <div className="flex flex-wrap gap-2 mt-4">
                     {event.category && (
                         <span className={cn(
@@ -345,11 +345,11 @@ function EventContent({ event }: { event: Event }) {
                             {event.category}
                         </span>
                     )}
-                    {event.department && (
-                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
-                            {event.department}
+                    {event.departments && event.departments.map(dept => (
+                        <span key={dept} className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                            {dept}
                         </span>
-                    )}
+                    ))}
                 </div>
             )}
         </>
