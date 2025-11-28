@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format, addDays, startOfWeek, isSameDay, addWeeks, subWeeks, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -15,14 +15,23 @@ interface MobileWeekViewProps {
 }
 
 export default function MobileWeekView({ selectedDate, events, onDateSelect, onMonthChange }: MobileWeekViewProps) {
-    const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(selectedDate, { weekStartsOn: 0 }));
+    const [currentWeekStart, setCurrentWeekStart] = useState(() => 
+        startOfWeek(selectedDate, { weekStartsOn: 0 })
+    );
 
-    const handleWeekChange = (newWeekStart: Date) => {
+    const goToPrevWeek = useCallback(() => {
+        const newWeekStart = subWeeks(currentWeekStart, 1);
         setCurrentWeekStart(newWeekStart);
-        // 주의 중간 날짜(수요일)를 기준으로 월 판단
         const midWeek = addDays(newWeekStart, 3);
         onMonthChange?.(midWeek);
-    };
+    }, [currentWeekStart, onMonthChange]);
+
+    const goToNextWeek = useCallback(() => {
+        const newWeekStart = addWeeks(currentWeekStart, 1);
+        setCurrentWeekStart(newWeekStart);
+        const midWeek = addDays(newWeekStart, 3);
+        onMonthChange?.(midWeek);
+    }, [currentWeekStart, onMonthChange]);
 
     // 선택된 날짜가 바뀌면 해당 주로 이동
     useEffect(() => {
@@ -54,13 +63,23 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
                 </h2>
                 <div className="flex gap-2">
                     <button
-                        onClick={() => handleWeekChange(subWeeks(currentWeekStart, 1))}
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            goToPrevWeek();
+                        }}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center dark:text-white"
                     >
                         <ChevronLeft size={20} />
                     </button>
                     <button
-                        onClick={() => handleWeekChange(addWeeks(currentWeekStart, 1))}
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            goToNextWeek();
+                        }}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center dark:text-white"
                     >
                         <ChevronRight size={20} />

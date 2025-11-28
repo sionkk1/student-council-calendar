@@ -123,21 +123,32 @@ body {
 }
 
 /* 주말 색상 - 일요일 빨강, 토요일 파랑 */
-.calendar-weekend .rdp-head_cell:first-child,
-.calendar-weekend .rdp-day:nth-child(7n+1) {
+.calendar-weekend .rdp-head_cell:first-child {
   color: #ef4444 !important;
 }
 
-.calendar-weekend .rdp-head_cell:last-child,
-.calendar-weekend .rdp-day:nth-child(7n) {
+.calendar-weekend .rdp-head_cell:last-child {
   color: #3b82f6 !important;
 }
 
-/* 선택된 날짜는 흰색 유지 */
+/* 일요일 (매주 첫째 날) */
+.calendar-weekend .rdp-day:nth-child(7n+1):not(.rdp-day_selected) {
+  color: #ef4444 !important;
+}
+
+/* 토요일 (매주 7번째 날) */
+.calendar-weekend .rdp-day:nth-child(7n):not(.rdp-day_selected) {
+  color: #3b82f6 !important;
+}
+
+/* 선택된 날짜는 무조건 흰색 유지 (토요일, 일요일 포함) */
 .calendar-weekend .rdp-day_selected,
 .calendar-weekend .rdp-day_selected:nth-child(7n),
-.calendar-weekend .rdp-day_selected:nth-child(7n+1) {
+.calendar-weekend .rdp-day_selected:nth-child(7n+1),
+.rdp-day_selected,
+.rdp-day_selected:not([disabled]) {
   color: white !important;
+  background-color: #3b82f6 !important;
 }
 
 /* 일정 있는 날짜 - 다크모드에서도 텍스트 보이게 */
