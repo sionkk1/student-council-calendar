@@ -82,18 +82,20 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
                             onClick={() => onDateSelect(date)}
                             className={cn(
                                 "flex flex-col items-center justify-center p-2 rounded-lg min-h-[60px] transition-colors",
-                                isSelected ? "bg-blue-500 text-white" : "hover:bg-gray-50",
-                                hasEvent && !isSelected && "bg-blue-50",
-                                dayColor
+                                isSelected ? "bg-blue-500" : "hover:bg-gray-50 dark:hover:bg-gray-800",
+                                hasEvent && !isSelected && "bg-blue-50 dark:bg-blue-900/30"
                             )}
                         >
-                            <span className={cn("text-xs opacity-70 mb-1", dayColor)}>
+                            <span className={cn(
+                                "text-xs opacity-70 mb-1",
+                                isSelected ? "text-white" : dayColor
+                            )}>
                                 {format(date, 'E', { locale: ko })}
                             </span>
                             <span className={cn(
                                 "text-sm font-medium w-8 h-8 flex items-center justify-center rounded-full",
-                                isSameDay(date, new Date()) && !isSelected && "bg-gray-100",
-                                dayColor
+                                isSameDay(date, new Date()) && !isSelected && "bg-gray-100 dark:bg-gray-700",
+                                isSelected ? "text-white" : dayColor
                             )}>
                                 {format(date, 'd')}
                             </span>

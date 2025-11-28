@@ -134,8 +134,20 @@ body {
 }
 
 /* 선택된 날짜는 흰색 유지 */
-.calendar-weekend .rdp-day_selected {
+.calendar-weekend .rdp-day_selected,
+.calendar-weekend .rdp-day_selected:nth-child(7n),
+.calendar-weekend .rdp-day_selected:nth-child(7n+1) {
   color: white !important;
+}
+
+/* 일정 있는 날짜 - 다크모드에서도 텍스트 보이게 */
+.rdp .bg-blue-100 {
+  color: #1e40af !important;
+}
+
+.dark .rdp .bg-blue-100 {
+  background-color: #1e3a5f !important;
+  color: #93c5fd !important;
 }
 
 /* 스크롤바 숨기기 */
