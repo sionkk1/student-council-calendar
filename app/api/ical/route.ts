@@ -11,7 +11,15 @@ export async function GET() {
 
     const icalEvents = (events || []).map((event) => {
         const start = new Date(event.start_time);
-        const end = event.end_time ? new Date(event.end_time) : new Date(start.getTime() + 3600000);
+        let end: Date;
+        
+        if (event.is_all_day) {
+            // 종일 일정: 종료일은 시작일 + 1일
+            end = new Date(start);
+            end.setDate(end.getDate() + 1);
+        } else {
+            end = event.end_time ? new Date(event.end_time) : new Date(start.getTime() + 3600000);
+        }
 
         return `BEGIN:VEVENT
 UID:${event.id}@calendar

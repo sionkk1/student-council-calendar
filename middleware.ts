@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const method = request.method;
   
   // 관리자 전용 API 경로 보호 (GET 제외)
-  const protectedPaths = ['/api/events', '/api/upload'];
+  const protectedPaths = ['/api/events', '/api/upload', '/api/announcement'];
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
   
   if (isProtectedPath && method !== 'GET') {
@@ -27,5 +27,6 @@ export const config = {
     '/api/events/:path*',
     '/api/upload/:path*',
     '/api/download/:path*',
+    '/api/announcement/:path*',
   ],
 };
