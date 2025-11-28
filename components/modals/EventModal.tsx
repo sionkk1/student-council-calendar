@@ -213,7 +213,7 @@ function MeetingMinutesSection({
                         {isUploading ? '업로드 중...' : '업로드'}
                         <input
                             type="file"
-                            accept=".pdf,.docx,.xlsx"
+                            accept=".pdf,.docx,.xlsx,.hwp,.hwpx"
                             onChange={onUpload}
                             disabled={isUploading}
                             className="hidden"

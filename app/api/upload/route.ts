@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
             .upload(filePath, arrayBuffer, { contentType: file.type });
 
         if (uploadError) {
-            return NextResponse.json({ error: '파일 업로드에 실패했습니다.' }, { status: 500 });
+            console.error('Storage upload error:', uploadError);
+            return NextResponse.json({ error: `업로드 실패: ${uploadError.message}` }, { status: 500 });
         }
 
         const { data, error } = await supabaseAdmin
@@ -34,30 +35,40 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (error) {
+            console.error('DB insert error:', error);
             await supabaseAdmin.storage.from('meeting-minutes').remove([filePath]);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
         return NextResponse.json(data, { status: 201 });
-    } catch (error) {
-        return NextResponse.json({ error: '서버 오류' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Upload API error:', error);
+        return NextResponse.json({ error: error?.message || '서버 오류' }, { status: 500 });
     }
 }
 
 export async function GET(request: NextRequest) {
-    const { searchParams } = new URL(request.url);
-    const eventId = searchParams.get('eventId');
+    try {
+        const { searchParams } = new URL(request.url);
+        const eventId = searchParams.get('eventId');
 
-    if (!eventId) return NextResponse.json({ error: '이벤트 ID가 필요합니다.' }, { status: 400 });
+        if (!eventId) return NextResponse.json({ error: '이벤트 ID가 필요합니다.' }, { status: 400 });
 
-    const { data, error } = await supabaseAdmin
-        .from('meeting_minutes')
-        .select('*')
-        .eq('event_id', eventId)
-        .order('uploaded_at', { ascending: false });
+        const { data, error } = await supabaseAdmin
+            .from('meeting_minutes')
+            .select('*')
+            .eq('event_id', eventId)
+            .order('uploaded_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
+        if (error) {
+            console.error('GET meeting_minutes error:', error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+        return NextResponse.json(data || []);
+    } catch (error: any) {
+        console.error('GET API error:', error);
+        return NextResponse.json({ error: error?.message || '서버 오류' }, { status: 500 });
+    }
 }
 
 export async function DELETE(request: NextRequest) {
