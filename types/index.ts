@@ -6,6 +6,7 @@ export interface Event {
   end_time?: string; // ISO string
   is_all_day: boolean;
   category?: string;
+  department?: string; // 부서
   color_tag?: string;
   is_school_event?: boolean; // 학교 일정 (수정 불가)
   created_at: string;

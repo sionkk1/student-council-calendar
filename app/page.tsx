@@ -17,6 +17,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 // 카테고리 목록
 const CATEGORIES = ['전체', '회의', '행사', '공지', '학교', '기타'];
+const DEPARTMENTS = ['전체', '회장단', '자치기획실', '문화체육부', '창의진로부', '언론정보부', '소통홍보부', '환경복지부', '생활인권부'];
 
 // 인라인 스켈레톤 컴포넌트
 function EventSkeleton() {
@@ -41,6 +42,7 @@ export default function Home() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('전체');
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('전체');
 
   const { isAdmin, isLoading: isAdminLoading, login, logout } = useAdmin();
   const { events, isLoading: isEventsLoading, createEvent, updateEvent, deleteEvent, refetch } = useEvents(currentMonth);
@@ -103,21 +105,25 @@ export default function Home() {
     return result.success;
   };
 
-  // 선택된 날짜의 일정 필터링 (카테고리 포함)
+  // 선택된 날짜의 일정 필터링 (카테고리 + 부서 포함)
   const selectedDateEvents = useMemo(() => {
     return events.filter(event => {
       const eventDate = new Date(event.start_time);
       const dateMatch = eventDate.toDateString() === selectedDate.toDateString();
       const categoryMatch = selectedCategory === '전체' || event.category === selectedCategory;
-      return dateMatch && categoryMatch;
+      const departmentMatch = selectedDepartment === '전체' || event.department === selectedDepartment;
+      return dateMatch && categoryMatch && departmentMatch;
     });
-  }, [events, selectedDate, selectedCategory]);
+  }, [events, selectedDate, selectedCategory, selectedDepartment]);
 
-  // 캘린더에 표시할 이벤트 (카테고리 필터 적용)
+  // 캘린더에 표시할 이벤트 (카테고리 + 부서 필터 적용)
   const filteredEvents = useMemo(() => {
-    if (selectedCategory === '전체') return events;
-    return events.filter(event => event.category === selectedCategory);
-  }, [events, selectedCategory]);
+    return events.filter(event => {
+      const categoryMatch = selectedCategory === '전체' || event.category === selectedCategory;
+      const departmentMatch = selectedDepartment === '전체' || event.department === selectedDepartment;
+      return categoryMatch && departmentMatch;
+    });
+  }, [events, selectedCategory, selectedDepartment]);
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
@@ -148,6 +154,13 @@ export default function Home() {
           categories={CATEGORIES}
           selected={selectedCategory}
           onSelect={setSelectedCategory}
+        />
+
+        {/* 부서 필터 */}
+        <CategoryFilter
+          categories={DEPARTMENTS}
+          selected={selectedDepartment}
+          onSelect={setSelectedDepartment}
         />
 
         {/* 선택된 날짜의 일정 목록 */}

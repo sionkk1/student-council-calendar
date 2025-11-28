@@ -335,14 +335,21 @@ function EventContent({ event }: { event: Event }) {
                 </div>
             )}
 
-            {event.category && (
-                <div className="flex gap-2 mt-4">
-                    <span className={cn(
-                        "px-3 py-1 rounded-full text-sm font-medium",
-                        event.color_tag ? `bg-[${event.color_tag}]/10 text-[${event.color_tag}]` : "bg-gray-100 text-gray-700"
-                    )} style={event.color_tag ? { backgroundColor: `${event.color_tag}20`, color: event.color_tag } : {}}>
-                        {event.category}
-                    </span>
+            {(event.category || event.department) && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                    {event.category && (
+                        <span className={cn(
+                            "px-3 py-1 rounded-full text-sm font-medium",
+                            event.color_tag ? `bg-[${event.color_tag}]/10 text-[${event.color_tag}]` : "bg-gray-100 text-gray-700"
+                        )} style={event.color_tag ? { backgroundColor: `${event.color_tag}20`, color: event.color_tag } : {}}>
+                            {event.category}
+                        </span>
+                    )}
+                    {event.department && (
+                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                            {event.department}
+                        </span>
+                    )}
                 </div>
             )}
         </>
