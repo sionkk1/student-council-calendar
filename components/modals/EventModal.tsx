@@ -69,7 +69,7 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
                 const error = await res.json();
                 alert(error.error || '업로드에 실패했습니다.');
             }
-        } catch (error) {
+        } catch {
             alert('업로드 중 오류가 발생했습니다.');
         } finally {
             setIsUploading(false);
@@ -90,7 +90,7 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
             } else {
                 alert('삭제에 실패했습니다.');
             }
-        } catch (error) {
+        } catch {
             alert('삭제 중 오류가 발생했습니다.');
         }
     };
@@ -109,7 +109,7 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
                 window.URL.revokeObjectURL(url);
                 a.remove();
             }
-        } catch (error) {
+        } catch {
             alert('다운로드에 실패했습니다.');
         }
     };

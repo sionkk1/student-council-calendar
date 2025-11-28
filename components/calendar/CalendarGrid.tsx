@@ -1,7 +1,6 @@
 'use client';
 
 import { DayPicker } from 'react-day-picker';
-import { format, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 import { Event } from '@/types';

@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Shield, Calendar, Share2 } from 'lucide-react';
+import { LogOut, Shield, Calendar } from 'lucide-react';
 import { useState } from 'react';
 
 interface AdminBarProps {
@@ -20,7 +20,7 @@ export default function AdminBar({ onLogout }: AdminBarProps) {
           text: '캘린더 앱에서 이 URL을 구독하세요',
           url: icalUrl,
         });
-      } catch (err) {
+      } catch {
         setShowIcalInfo(true);
       }
     } else {
@@ -69,7 +69,7 @@ export default function AdminBar({ onLogout }: AdminBarProps) {
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full space-y-4">
             <h3 className="text-lg font-bold">캘린더 구독</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              아래 URL을 복사해서 Google 캘린더, Apple 캘린더 등에서 "URL로 구독 추가" 하세요.
+              아래 URL을 복사해서 Google 캘린더, Apple 캘린더 등에서 &quot;URL로 구독 추가&quot; 하세요.
             </p>
             <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg text-xs break-all font-mono">
               {typeof window !== 'undefined' && `${window.location.origin}/api/ical`}

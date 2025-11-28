@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Megaphone, Edit, Trash2 } from 'lucide-react';
+import { X, Megaphone, Edit } from 'lucide-react';
 
 interface Announcement {
   id: string;
@@ -59,7 +59,7 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
         setIsEditing(false);
         setDismissed(false);
       }
-    } catch (error) {
+    } catch {
       alert('저장에 실패했습니다.');
     }
   };
@@ -70,7 +70,7 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
       setAnnouncement(null);
       setEditContent('');
       setIsEditing(false);
-    } catch (error) {
+    } catch {
       alert('삭제에 실패했습니다.');
     }
   };

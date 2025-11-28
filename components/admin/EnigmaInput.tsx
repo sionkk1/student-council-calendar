@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +34,7 @@ export default function EnigmaInput({ onVerify }: EnigmaInputProps) {
                 setStatus('error');
                 setTimeout(() => setStatus('idle'), 2000);
             }
-        } catch (error) {
+        } catch {
             setStatus('error');
         }
     };

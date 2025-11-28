@@ -45,7 +45,7 @@ export default function Home() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('전체');
 
   const { isAdmin, isLoading: isAdminLoading, login, logout } = useAdmin();
-  const { events, isLoading: isEventsLoading, createEvent, updateEvent, deleteEvent, refetch } = useEvents(currentMonth);
+  const { events, isLoading: isEventsLoading, createEvent, updateEvent, deleteEvent } = useEvents(currentMonth);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
