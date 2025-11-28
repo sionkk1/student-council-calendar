@@ -7,7 +7,7 @@ import EventFormModal from '@/components/modals/EventFormModal';
 import EnigmaInput from '@/components/admin/EnigmaInput';
 import AdminBar from '@/components/admin/AdminBar';
 import EventCard from '@/components/calendar/EventCard';
-import CategoryFilter from '@/components/calendar/CategoryFilter';
+import { MultiSelectFilter } from '@/components/calendar/CategoryFilter';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useEvents } from '@/hooks/useEvents';
@@ -15,9 +15,9 @@ import { Event } from '@/types';
 import { Plus } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 
-// 카테고리 목록
-const CATEGORIES = ['전체', '회의', '행사', '공지', '학교', '기타'];
-const DEPARTMENTS = ['전체', '회장단', '자치기획실', '문화체육부', '창의진로부', '언론정보부', '소통홍보부', '환경복지부', '생활인권부'];
+// 카테고리 목록 (전체 제외)
+const CATEGORIES = ['회의', '행사', '공지', '학교', '기타'];
+const DEPARTMENTS = ['회장단', '자치기획실', '문화체육부', '창의진로부', '언론정보부', '소통홍보부', '환경복지부', '생활인권부'];
 
 // 인라인 스켈레톤 컴포넌트
 function EventSkeleton() {
@@ -41,11 +41,27 @@ export default function Home() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('전체');
-  const [selectedDepartment, setSelectedDepartment] = useState<string>('전체');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
 
   const { isAdmin, isLoading: isAdminLoading, login, logout } = useAdmin();
   const { events, isLoading: isEventsLoading, createEvent, updateEvent, deleteEvent } = useEvents(currentMonth);
+
+  const toggleCategory = (cat: string) => {
+    if (selectedCategories.includes(cat)) {
+      setSelectedCategories(selectedCategories.filter(c => c !== cat));
+    } else {
+      setSelectedCategories([...selectedCategories, cat]);
+    }
+  };
+
+  const toggleDepartment = (dept: string) => {
+    if (selectedDepartments.includes(dept)) {
+      setSelectedDepartments(selectedDepartments.filter(d => d !== dept));
+    } else {
+      setSelectedDepartments([...selectedDepartments, dept]);
+    }
+  };
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -105,27 +121,34 @@ export default function Home() {
     return result.success;
   };
 
-  // 선택된 날짜의 일정 필터링 (카테고리 + 부서 포함)
+  // 선택된 날짜의 일정 필터링 (카테고리 + 부서 다중 선택)
   const selectedDateEvents = useMemo(() => {
     return events.filter(event => {
       const eventDate = new Date(event.start_time);
       const dateMatch = eventDate.toDateString() === selectedDate.toDateString();
-      const categoryMatch = selectedCategory === '전체' || event.category === selectedCategory;
-      const departmentMatch = selectedDepartment === '전체' || 
-        (event.departments && event.departments.includes(selectedDepartment));
+      
+      // 카테고리 필터: 선택된 것이 없으면 전체, 있으면 해당 카테고리만
+      const categoryMatch = selectedCategories.length === 0 || 
+        (event.category && selectedCategories.includes(event.category));
+      
+      // 부서 필터: 선택된 것이 없으면 전체, 있으면 교집합 확인
+      const departmentMatch = selectedDepartments.length === 0 || 
+        (event.departments && event.departments.some(d => selectedDepartments.includes(d)));
+      
       return dateMatch && categoryMatch && departmentMatch;
     });
-  }, [events, selectedDate, selectedCategory, selectedDepartment]);
+  }, [events, selectedDate, selectedCategories, selectedDepartments]);
 
   // 캘린더에 표시할 이벤트 (카테고리 + 부서 필터 적용)
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
-      const categoryMatch = selectedCategory === '전체' || event.category === selectedCategory;
-      const departmentMatch = selectedDepartment === '전체' || 
-        (event.departments && event.departments.includes(selectedDepartment));
+      const categoryMatch = selectedCategories.length === 0 || 
+        (event.category && selectedCategories.includes(event.category));
+      const departmentMatch = selectedDepartments.length === 0 || 
+        (event.departments && event.departments.some(d => selectedDepartments.includes(d)));
       return categoryMatch && departmentMatch;
     });
-  }, [events, selectedCategory, selectedDepartment]);
+  }, [events, selectedCategories, selectedDepartments]);
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
@@ -151,18 +174,22 @@ export default function Home() {
           onMonthChange={setCurrentMonth}
         />
 
-        {/* 카테고리 필터 */}
-        <CategoryFilter
-          categories={CATEGORIES}
-          selected={selectedCategory}
-          onSelect={setSelectedCategory}
+        {/* 카테고리 필터 (다중 선택) */}
+        <MultiSelectFilter
+          label="카테고리"
+          options={CATEGORIES}
+          selected={selectedCategories}
+          onToggle={toggleCategory}
+          onClear={() => setSelectedCategories([])}
         />
 
-        {/* 부서 필터 */}
-        <CategoryFilter
-          categories={DEPARTMENTS}
-          selected={selectedDepartment}
-          onSelect={setSelectedDepartment}
+        {/* 부서 필터 (다중 선택) */}
+        <MultiSelectFilter
+          label="부서"
+          options={DEPARTMENTS}
+          selected={selectedDepartments}
+          onToggle={toggleDepartment}
+          onClear={() => setSelectedDepartments([])}
         />
 
         {/* 선택된 날짜의 일정 목록 */}
