@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format, addDays, startOfWeek, isSameDay, addWeeks, subWeeks } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -19,16 +19,29 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
 
     const handleWeekChange = (newWeekStart: Date) => {
         setCurrentWeekStart(newWeekStart);
-        onMonthChange?.(newWeekStart);
+        // 주의 중간 날짜(수요일)를 기준으로 월 판단
+        const midWeek = addDays(newWeekStart, 3);
+        onMonthChange?.(midWeek);
     };
 
+    // 선택된 날짜가 바뀌면 해당 주로 이동
+    useEffect(() => {
+        const newWeekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
+        if (newWeekStart.getTime() !== currentWeekStart.getTime()) {
+            setCurrentWeekStart(newWeekStart);
+        }
+    }, [selectedDate]);
+
     const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(currentWeekStart, i));
+    
+    // 주의 중간(수요일)을 기준으로 월 표시
+    const displayMonth = addDays(currentWeekStart, 3);
 
     return (
         <div className="w-full bg-white shadow-sm rounded-b-xl pb-2">
             <div className="flex items-center justify-between p-4">
                 <h2 className="text-lg font-bold">
-                    {format(currentWeekStart, 'yyyy년 M월', { locale: ko })}
+                    {format(displayMonth, 'yyyy년 M월', { locale: ko })}
                 </h2>
                 <div className="flex gap-2">
                     <button

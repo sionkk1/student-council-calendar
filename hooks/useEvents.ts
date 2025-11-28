@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Event } from '@/types';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
 
 interface UseEventsReturn {
   events: Event[];
@@ -24,8 +24,11 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
       setIsLoading(true);
       setError(null);
       
-      const startDate = format(startOfMonth(month), 'yyyy-MM-dd');
-      const endDate = format(endOfMonth(month), 'yyyy-MM-dd');
+      // 이전 달, 현재 달, 다음 달 모두 가져오기 (주간 뷰 경계 문제 해결)
+      const prevMonth = subMonths(month, 1);
+      const nextMonth = addMonths(month, 1);
+      const startDate = format(startOfMonth(prevMonth), 'yyyy-MM-dd');
+      const endDate = format(endOfMonth(nextMonth), 'yyyy-MM-dd');
       
       const res = await fetch(`/api/events?start=${startDate}&end=${endDate}`);
       
