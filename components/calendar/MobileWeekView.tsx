@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format, addDays, startOfWeek, isSameDay, addWeeks, subWeeks } from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay, addWeeks, subWeeks, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Event } from '@/types';
@@ -37,6 +37,15 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
     // 주의 중간(수요일)을 기준으로 월 표시
     const displayMonth = addDays(currentWeekStart, 3);
 
+    // 요일별 색상 (0=일요일, 6=토요일)
+    const getDayColor = (date: Date, isSelected: boolean) => {
+        if (isSelected) return 'text-white';
+        const day = getDay(date);
+        if (day === 0) return 'text-red-500'; // 일요일
+        if (day === 6) return 'text-blue-500'; // 토요일
+        return '';
+    };
+
     return (
         <div className="w-full bg-white shadow-sm rounded-b-xl pb-2">
             <div className="flex items-center justify-between p-4">
@@ -65,6 +74,7 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
                 {weekDays.map((date) => {
                     const isSelected = isSameDay(date, selectedDate);
                     const hasEvent = events.some(e => isSameDay(new Date(e.start_time), date));
+                    const dayColor = getDayColor(date, isSelected);
 
                     return (
                         <button
@@ -73,15 +83,17 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
                             className={cn(
                                 "flex flex-col items-center justify-center p-2 rounded-lg min-h-[60px] transition-colors",
                                 isSelected ? "bg-blue-500 text-white" : "hover:bg-gray-50",
-                                hasEvent && !isSelected && "bg-blue-50"
+                                hasEvent && !isSelected && "bg-blue-50",
+                                dayColor
                             )}
                         >
-                            <span className="text-xs opacity-70 mb-1">
+                            <span className={cn("text-xs opacity-70 mb-1", dayColor)}>
                                 {format(date, 'E', { locale: ko })}
                             </span>
                             <span className={cn(
                                 "text-sm font-medium w-8 h-8 flex items-center justify-center rounded-full",
-                                isSameDay(date, new Date()) && !isSelected && "bg-gray-100"
+                                isSameDay(date, new Date()) && !isSelected && "bg-gray-100",
+                                dayColor
                             )}>
                                 {format(date, 'd')}
                             </span>

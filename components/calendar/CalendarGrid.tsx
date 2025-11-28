@@ -1,7 +1,7 @@
 'use client';
 
 import { DayPicker } from 'react-day-picker';
-import { format } from 'date-fns';
+import { format, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 import { Event } from '@/types';
@@ -21,7 +21,7 @@ export default function CalendarGrid({ events, selectedDate, onDateSelect, onMon
     return (
         <div className="w-full">
             {/* Desktop: Full Calendar */}
-            <div className="hidden md:block p-4 bg-white rounded-lg shadow">
+            <div className="hidden md:block p-4 bg-white rounded-lg shadow calendar-weekend">
                 <DayPicker
                     mode="single"
                     selected={selectedDate}
