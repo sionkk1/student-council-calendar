@@ -7,10 +7,15 @@ import EventFormModal from '@/components/modals/EventFormModal';
 import EnigmaInput from '@/components/admin/EnigmaInput';
 import AdminBar from '@/components/admin/AdminBar';
 import EventCard from '@/components/calendar/EventCard';
+import CategoryFilter from '@/components/calendar/CategoryFilter';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useEvents } from '@/hooks/useEvents';
 import { Event } from '@/types';
 import { Plus } from 'lucide-react';
+import ThemeToggle from '@/components/ThemeToggle';
+
+// 카테고리 목록
+const CATEGORIES = ['전체', '회의', '행사', '공지', '기타'];
 
 // 인라인 스켈레톤 컴포넌트
 function EventSkeleton() {
@@ -34,6 +39,7 @@ export default function Home() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('전체');
 
   const { isAdmin, isLoading: isAdminLoading, login, logout } = useAdmin();
   const { events, isLoading: isEventsLoading, createEvent, updateEvent, deleteEvent, refetch } = useEvents(currentMonth);
@@ -96,18 +102,30 @@ export default function Home() {
     return result.success;
   };
 
-  // 선택된 날짜의 일정 필터링
+  // 선택된 날짜의 일정 필터링 (카테고리 포함)
   const selectedDateEvents = useMemo(() => {
     return events.filter(event => {
       const eventDate = new Date(event.start_time);
-      return eventDate.toDateString() === selectedDate.toDateString();
+      const dateMatch = eventDate.toDateString() === selectedDate.toDateString();
+      const categoryMatch = selectedCategory === '전체' || event.category === selectedCategory;
+      return dateMatch && categoryMatch;
     });
-  }, [events, selectedDate]);
+  }, [events, selectedDate, selectedCategory]);
+
+  // 캘린더에 표시할 이벤트 (카테고리 필터 적용)
+  const filteredEvents = useMemo(() => {
+    if (selectedCategory === '전체') return events;
+    return events.filter(event => event.category === selectedCategory);
+  }, [events, selectedCategory]);
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
       <header className="bg-white border-b px-4 py-4 sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-center">문태고등학교 제 74기 학생자치회 일정</h1>
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="w-10" /> {/* 균형을 위한 빈 공간 */}
+          <h1 className="text-lg font-bold text-center flex-1">학생자치회 일정</h1>
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* 관리자 상태 바 */}
@@ -115,10 +133,17 @@ export default function Home() {
 
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         <CalendarGrid
-          events={events}
+          events={filteredEvents}
           selectedDate={selectedDate}
           onDateSelect={handleDateSelect}
           onMonthChange={setCurrentMonth}
+        />
+
+        {/* 카테고리 필터 */}
+        <CategoryFilter
+          categories={CATEGORIES}
+          selected={selectedCategory}
+          onSelect={setSelectedCategory}
         />
 
         {/* 선택된 날짜의 일정 목록 */}
