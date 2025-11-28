@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
         }
 
         const date = new Date();
-        // 파일명에서 특수문자 제거하고 안전한 이름 생성
-        const safeFileName = file.name.replace(/[^a-zA-Z0-9가-힣._-]/g, '_');
-        const filePath = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${eventId}/${Date.now()}_${safeFileName}`;
+        // 파일명을 영문+숫자+확장자만 남기고 UUID로 대체
+        const ext = file.name.split('.').pop() || 'file';
+        const filePath = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${eventId}/${Date.now()}.${ext}`;
 
         const arrayBuffer = await file.arrayBuffer();
         const { error: uploadError } = await supabaseAdmin.storage
