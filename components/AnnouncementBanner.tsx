@@ -126,7 +126,7 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
   // 공지가 없고 관리자인 경우 - 작성 버튼 표시
   if (!announcement && isAdmin) {
     return (
-      <div className="bg-gray-50 border-b border-gray-200 p-2">
+      <div className="bg-white border-b border-gray-200 p-2">
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => setIsEditing(true)}

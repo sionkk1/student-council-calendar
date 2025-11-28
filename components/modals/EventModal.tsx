@@ -237,7 +237,7 @@ function MeetingMinutesSection({
                     {minutes.map((minute) => (
                         <div
                             key={minute.id}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            className="flex items-center justify-between p-3 bg-white rounded-lg"
                         >
                             <div className="flex items-center gap-2 min-w-0">
                                 <FileText size={16} className="text-blue-500 flex-shrink-0" />

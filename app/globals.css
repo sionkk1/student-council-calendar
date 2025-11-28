@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: #ffffff;
@@ -37,6 +38,10 @@ html.dark body {
 }
 
 /* 다크모드 대응 */
+.bg-gray-50 {
+  background-color: #ffffff !important;
+}
+
 .dark .bg-white {
   background-color: #1a1a1a !important;
 }
@@ -106,7 +111,7 @@ html.dark body {
 .rdp {
   --rdp-cell-size: 50px;
   --rdp-accent-color: #3b82f6;
-  --rdp-background-color: #e0f2fe;
+  --rdp-background-color: #ffffff;
   margin: 0 auto;
 }
 
