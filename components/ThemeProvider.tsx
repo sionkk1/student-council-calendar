@@ -72,7 +72,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    // SSR에서는 기본값 반환
+    return {
+      theme: 'system' as Theme,
+      setTheme: () => {},
+      resolvedTheme: 'light' as const,
+    };
   }
   return context;
 }
