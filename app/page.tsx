@@ -107,7 +107,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
       <header className="bg-white border-b px-4 py-4 sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-center">학생회 일정</h1>
+        <h1 className="text-xl font-bold text-center">문태고등학교 제 74기 학생자치회 일정</h1>
       </header>
 
       {/* 관리자 상태 바 */}

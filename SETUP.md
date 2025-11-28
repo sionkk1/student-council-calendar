@@ -20,6 +20,8 @@ Next.js API 라우트를 사용하려면 다음 폴더와 파일을 생성해야
 # 폴더 구조 생성
 mkdir -p app/api/auth
 mkdir -p app/api/events
+mkdir -p app/api/upload
+mkdir -p app/api/download
 ```
 
 ### 3. API 파일 생성
@@ -114,14 +116,119 @@ export async function DELETE(request: NextRequest) {
 }
 ```
 
+#### `app/api/upload/route.ts` (회의록 업로드)
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const eventId = formData.get('eventId') as string;
+
+    if (!file || !eventId) {
+      return NextResponse.json({ error: '파일과 이벤트 ID가 필요합니다.' }, { status: 400 });
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: '파일 크기는 10MB 이하여야 합니다.' }, { status: 400 });
+    }
+
+    const date = new Date();
+    const filePath = `${date.getFullYear()}/${date.getMonth() + 1}/${eventId}/${Date.now()}_${file.name}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('meeting-minutes')
+      .upload(filePath, arrayBuffer, { contentType: file.type });
+
+    if (uploadError) {
+      return NextResponse.json({ error: '파일 업로드에 실패했습니다.' }, { status: 500 });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('meeting_minutes')
+      .insert({ event_id: eventId, file_path: filePath, file_name: file.name, file_size: file.size })
+      .select()
+      .single();
+
+    if (error) {
+      await supabaseAdmin.storage.from('meeting-minutes').remove([filePath]);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: '서버 오류' }, { status: 500 });
+  }
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const eventId = searchParams.get('eventId');
+
+  if (!eventId) return NextResponse.json({ error: '이벤트 ID가 필요합니다.' }, { status: 400 });
+
+  const { data, error } = await supabaseAdmin
+    .from('meeting_minutes')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('uploaded_at', { ascending: false });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
+
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+
+  if (!id) return NextResponse.json({ error: 'ID가 필요합니다.' }, { status: 400 });
+
+  const { data: minute } = await supabaseAdmin.from('meeting_minutes').select('file_path').eq('id', id).single();
+  if (minute) await supabaseAdmin.storage.from('meeting-minutes').remove([minute.file_path]);
+  
+  const { error } = await supabaseAdmin.from('meeting_minutes').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true });
+}
+```
+
+#### `app/api/download/route.ts` (회의록 다운로드)
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const path = searchParams.get('path');
+  const name = searchParams.get('name');
+
+  if (!path) return NextResponse.json({ error: '경로가 필요합니다.' }, { status: 400 });
+
+  const { data, error } = await supabaseAdmin.storage.from('meeting-minutes').download(path);
+  if (error) return NextResponse.json({ error: '다운로드 실패' }, { status: 500 });
+
+  return new NextResponse(data, {
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(name || 'file')}"`,
+    },
+  });
+}
+```
+
 ### 4. Supabase 설정
 
 Supabase 대시보드에서 SQL Editor를 열고 다음 쿼리를 실행하세요:
 
 ```sql
 -- events 테이블 생성
-CREATE TABLE events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   description TEXT,
   start_time TIMESTAMPTZ NOT NULL,
@@ -133,17 +240,40 @@ CREATE TABLE events (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- meeting_minutes 테이블 생성
+CREATE TABLE IF NOT EXISTS meeting_minutes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+  file_path TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  file_size INTEGER,
+  uploaded_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- 인덱스 생성
-CREATE INDEX idx_events_start_time ON events(start_time);
+CREATE INDEX IF NOT EXISTS idx_events_start_time ON events(start_time);
 
 -- RLS 활성화
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE meeting_minutes ENABLE ROW LEVEL SECURITY;
 
--- 읽기 정책 (누구나 조회 가능)
-CREATE POLICY "Anyone can view events" ON events FOR SELECT USING (true);
+-- 모든 작업 허용 정책
+CREATE POLICY "Allow all on events" ON events FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on meeting_minutes" ON meeting_minutes FOR ALL USING (true) WITH CHECK (true);
+
+-- 실시간 동기화를 위한 Publication 설정
+ALTER PUBLICATION supabase_realtime ADD TABLE events;
 ```
 
-### 5. 실행
+### 5. Supabase Storage 설정
+
+1. Supabase 대시보드 → **Storage** 메뉴
+2. **New Bucket** 클릭
+3. 이름: `meeting-minutes`
+4. Public: **OFF** (비공개)
+5. **Create bucket** 클릭
+
+### 6. 실행
 
 ```bash
 npm run dev
@@ -180,4 +310,5 @@ student-council-calendar/
 - ✅ 일정 조회
 - ✅ 관리자 인증 (Enigma 코드)
 - ✅ 일정 추가/수정/삭제 (관리자)
-- ✅ 스와이프 제스처 (모바일)
+- ✅ 실시간 동기화 (Supabase Realtime)
+- ✅ 회의록 업로드/다운로드 (관리자)

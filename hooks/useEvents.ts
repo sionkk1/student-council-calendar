@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Event } from '@/types';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
+import { supabase } from '@/lib/supabase/client';
 
 interface UseEventsReturn {
   events: Event[];
@@ -18,6 +19,7 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -46,9 +48,52 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
     }
   }, [month]);
 
+  // 실시간 구독 설정
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+
+    // Supabase Realtime 구독
+    const channel = supabase
+      .channel('events-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'events' },
+        (payload) => {
+          console.log('New event:', payload.new);
+          setEvents(prev => {
+            // 중복 체크
+            if (prev.some(e => e.id === payload.new.id)) return prev;
+            return [...prev, payload.new as Event];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'events' },
+        (payload) => {
+          console.log('Updated event:', payload.new);
+          setEvents(prev => prev.map(e => e.id === payload.new.id ? payload.new as Event : e));
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'events' },
+        (payload) => {
+          console.log('Deleted event:', payload.old);
+          setEvents(prev => prev.filter(e => e.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    // 클린업
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+    };
+  }, [month]);
 
   const createEvent = async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'>) => {
     try {

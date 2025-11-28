@@ -26,5 +26,6 @@ export const config = {
   matcher: [
     '/api/events/:path*',
     '/api/upload/:path*',
+    '/api/download/:path*',
   ],
 };
