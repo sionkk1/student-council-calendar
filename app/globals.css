@@ -2,8 +2,21 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --color-background: #ffffff;
-  --color-foreground: #171717;
+  /* Modern Academic Color Palette */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
@@ -13,182 +26,201 @@
   --breakpoint-xl: 1280px;
 }
 
-/* 라이트모드 기본값 */
-html {
-  background-color: #ffffff;
-  color: #171717;
+:root {
+  /* Light Mode - Clean & Trustworthy */
+  --background: #f8fafc;
+  /* Slate 50 */
+  --foreground: #0f172a;
+  /* Slate 900 */
+
+  --primary: #1e3a8a;
+  /* Blue 900 - Deep Royal Blue */
+  --primary-foreground: #ffffff;
+
+  --secondary: #e0f2fe;
+  /* Sky 100 */
+  --secondary-foreground: #0284c7;
+  /* Sky 600 */
+
+  --accent: #f59e0b;
+  /* Amber 500 */
+  --accent-foreground: #ffffff;
+
+  --muted: #f1f5f9;
+  /* Slate 100 */
+  --muted-foreground: #64748b;
+  /* Slate 500 */
+
+  --card: rgba(255, 255, 255, 0.7);
+  --card-foreground: #0f172a;
+
+  --border: #e2e8f0;
+  /* Slate 200 */
+}
+
+.dark {
+  /* Dark Mode - Deep & Professional */
+  --background: #020617;
+  /* Slate 950 */
+  --foreground: #f8fafc;
+  /* Slate 50 */
+
+  --primary: #3b82f6;
+  /* Blue 500 - Brighter for dark mode */
+  --primary-foreground: #ffffff;
+
+  --secondary: #1e293b;
+  /* Slate 800 */
+  --secondary-foreground: #38bdf8;
+  /* Sky 400 */
+
+  --accent: #fbbf24;
+  /* Amber 400 */
+  --accent-foreground: #000000;
+
+  --muted: #1e293b;
+  /* Slate 800 */
+  --muted-foreground: #94a3b8;
+  /* Slate 400 */
+
+  --card: rgba(15, 23, 42, 0.6);
+  --card-foreground: #f8fafc;
+
+  --border: #1e293b;
+  /* Slate 800 */
 }
 
 body {
-  background-color: #ffffff;
-  color: #171717;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh;
-}
-
-/* 다크모드 */
-html.dark {
-  background-color: #0a0a0a;
-  color: #ededed;
-}
-
-html.dark body {
-  background-color: #0a0a0a;
-  color: #ededed;
-}
-
-/* 다크모드 대응 */
-.bg-gray-50 {
-  background-color: #ffffff !important;
-}
-
-.dark .bg-white {
-  background-color: #1a1a1a !important;
-}
-
-.dark .bg-gray-50 {
-  background-color: #0a0a0a !important;
-}
-
-.dark .bg-gray-100 {
-  background-color: #374151 !important;
-}
-
-.dark .text-gray-900 {
-  color: var(--foreground) !important;
-}
-
-.dark .text-gray-700 {
-  color: #d1d5db !important;
-}
-
-.dark .text-gray-600 {
-  color: #9ca3af !important;
-}
-
-.dark .text-gray-500 {
-  color: #9ca3af !important;
-}
-
-.dark .text-gray-400 {
-  color: #6b7280 !important;
-}
-
-.dark .border-gray-100,
-.dark .border-gray-200,
-.dark .border-gray-300 {
-  border-color: #2a2a2a !important;
-}
-
-/* 다크모드 입력 필드 */
-.dark input,
-.dark textarea,
-.dark select {
-  background-color: #1f2937 !important;
-  color: #f3f4f6 !important;
-  border-color: #374151 !important;
-}
-
-.dark input::placeholder,
-.dark textarea::placeholder {
-  color: #6b7280 !important;
-}
-
-/* 다크모드 버튼 */
-.dark .hover\:bg-gray-50:hover {
-  background-color: #374151 !important;
-}
-
-.dark .hover\:bg-gray-100:hover {
-  background-color: #374151 !important;
-}
-
-.dark .hover\:bg-gray-200:hover {
-  background-color: #4b5563 !important;
-}
-
-/* react-day-picker 스타일 오버라이드 */
-.rdp {
-  --rdp-cell-size: 50px;
-  --rdp-accent-color: #3b82f6;
-  --rdp-background-color: #ffffff;
-  margin: 0 auto;
-}
-
-.dark .rdp {
-  --rdp-background-color: #1e3a5f;
+  background-color: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(var(--primary), 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(var(--secondary), 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
 }
 
-.rdp-day_selected:not([disabled]) {
-  background-color: #3b82f6 !important;
-  color: white !important;
+/* Glassmorphism Utilities */
+.glass {
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.rdp-day_selected:hover:not([disabled]) {
-  background-color: #2563eb !important;
+.dark .glass {
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* 주말 색상 - 일요일 빨강, 토요일 파랑 */
-.calendar-weekend .rdp-head_cell:first-child {
-  color: #ef4444 !important;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.calendar-weekend .rdp-head_cell:last-child {
-  color: #3b82f6 !important;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-/* 일요일 (매주 첫째 날) */
-.calendar-weekend .rdp-day:nth-child(7n+1):not(.rdp-day_selected) {
-  color: #ef4444 !important;
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 4px;
+  opacity: 0.5;
 }
 
-/* 토요일 (매주 7번째 날) */
-.calendar-weekend .rdp-day:nth-child(7n):not(.rdp-day_selected) {
-  color: #3b82f6 !important;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
 }
 
-/* 선택된 날짜는 무조건 흰색 유지 (토요일, 일요일 포함) */
-.calendar-weekend .rdp-day_selected,
-.calendar-weekend .rdp-day_selected:nth-child(7n),
-.calendar-weekend .rdp-day_selected:nth-child(7n+1),
-.rdp-day_selected,
-.rdp-day_selected:not([disabled]) {
-  color: white !important;
-  background-color: #3b82f6 !important;
-}
-
-/* 일정 있는 날짜 - 다크모드에서도 텍스트 보이게 */
-.rdp .bg-blue-100 {
-  color: #1e40af !important;
-}
-
-.dark .rdp .bg-blue-100 {
-  background-color: #1e3a5f !important;
-  color: #93c5fd !important;
-}
-
-/* 스크롤바 숨기기 */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* 애니메이션 */
+/* Animations */
 @keyframes slide-up {
   from {
-    transform: translateY(100%);
+    transform: translateY(20px);
+    opacity: 0;
   }
 
   to {
     transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-up {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
 .animate-slide-up {
-  animation: slide-up 0.3s ease-out;
+  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-scale-up {
+  animation: scale-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* React Day Picker Customization for New Theme */
+.rdp {
+  --rdp-cell-size: 45px;
+  --rdp-accent-color: var(--primary);
+  --rdp-background-color: transparent;
+  margin: 0 auto;
+}
+
+.rdp-day_selected:not([disabled]) {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.rdp-day_selected:hover:not([disabled]) {
+  background-color: var(--primary) !important;
+  opacity: 0.9;
+}
+
+.rdp-day:hover:not(.rdp-day_selected) {
+  background-color: var(--secondary) !important;
+  color: var(--secondary-foreground) !important;
+  border-radius: 12px;
+}
+
+/* Weekend Colors */
+.calendar-weekend .rdp-head_cell:first-child,
+.calendar-weekend .rdp-day:nth-child(7n+1):not(.rdp-day_selected) {
+  color: #ef4444 !important;
+  /* Red */
+}
+
+.calendar-weekend .rdp-head_cell:last-child,
+.calendar-weekend .rdp-day:nth-child(7n):not(.rdp-day_selected) {
+  color: #3b82f6 !important;
+  /* Blue */
+}
+
+/* Ensure selected text is always readable */
+.rdp-day_selected {
+  color: white !important;
 }

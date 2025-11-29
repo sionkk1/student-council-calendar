@@ -16,11 +16,10 @@ export default function CategoryFilter({ categories, selected, onSelect }: Categ
         <button
           key={category}
           onClick={() => onSelect(category)}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors min-h-[40px] ${
-            selected === category
-              ? 'bg-blue-500 text-white'
-              : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-          }`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 min-h-[40px] ${selected === category
+              ? 'bg-primary text-primary-foreground shadow-md scale-105'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
         >
           {category}
         </button>
@@ -46,13 +45,13 @@ export function MultiSelectFilter({
   onClear,
 }: MultiSelectFilterProps) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{label}</span>
+        <span className="text-sm font-semibold text-foreground/80">{label}</span>
         {selected.length > 0 && (
           <button
             onClick={onClear}
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
           >
             <X size={12} />
             초기화
@@ -64,18 +63,17 @@ export function MultiSelectFilter({
           <button
             key={option}
             onClick={() => onToggle(option)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors min-h-[36px] ${
-              selected.includes(option)
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-            }`}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${selected.includes(option)
+                ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                : 'bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+              }`}
           >
             {option}
           </button>
         ))}
       </div>
       {selected.length === 0 && (
-        <p className="text-xs text-gray-400 dark:text-gray-500">선택 안 함 = 전체 표시</p>
+        <p className="text-xs text-muted-foreground/60">선택 안 함 = 전체 표시</p>
       )}
     </div>
   );

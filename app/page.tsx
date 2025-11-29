@@ -12,7 +12,7 @@ import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useEvents } from '@/hooks/useEvents';
 import { Event } from '@/types';
-import { Plus } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Filter } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 
 // 카테고리 목록 (전체 제외)
@@ -22,12 +22,12 @@ const DEPARTMENTS = ['회장단', '자치기획실', '문화체육부', '창의�
 // 인라인 스켈레톤 컴포넌트
 function EventSkeleton() {
   return (
-    <div className="animate-pulse bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="animate-pulse glass p-4 rounded-xl shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="w-1 h-12 bg-gray-200 dark:bg-gray-600 rounded-full" />
+        <div className="w-1 h-12 bg-muted rounded-full" />
         <div className="flex-1 space-y-2">
-          <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2" />
+          <div className="h-4 bg-muted rounded w-3/4" />
+          <div className="h-3 bg-muted rounded w-1/2" />
         </div>
       </div>
     </div>
@@ -43,6 +43,7 @@ export default function Home() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false); // Mobile filter toggle
 
   const { isAdmin, isLoading: isAdminLoading, login, logout } = useAdmin();
   const { events, isLoading: isEventsLoading, createEvent, updateEvent, deleteEvent } = useEvents(currentMonth);
@@ -151,11 +152,18 @@ export default function Home() {
   }, [events, selectedCategories, selectedDepartments]);
 
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-900 pb-20">
-      <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-4 py-4 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="w-10" /> {/* 균형을 위한 빈 공간 */}
-          <h1 className="text-lg font-bold text-center flex-1 dark:text-white">학생자치회 일정</h1>
+    <main className="flex-1 pb-20">
+      {/* Glassmorphic Header */}
+      <header className="sticky top-0 z-20 glass border-b border-white/10 px-4 py-4 backdrop-blur-md transition-all duration-300">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-primary/10 rounded-xl text-primary">
+              <CalendarIcon size={20} />
+            </div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              학생자치회 일정
+            </h1>
+          </div>
           <ThemeToggle />
         </div>
       </header>
@@ -164,44 +172,68 @@ export default function Home() {
       {isAdmin && <AdminBar onLogout={logout} />}
 
       {/* 공지 배너 */}
-      <AnnouncementBanner isAdmin={isAdmin} />
+      <div className="max-w-5xl mx-auto px-4 mt-4">
+        <AnnouncementBanner isAdmin={isAdmin} />
+      </div>
 
-      <div className="max-w-4xl mx-auto p-4 space-y-6">
-        <CalendarGrid
-          events={filteredEvents}
-          selectedDate={selectedDate}
-          onDateSelect={handleDateSelect}
-          onMonthChange={setCurrentMonth}
-        />
+      <div className="max-w-5xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
+        {/* Left Column: Calendar & Filters */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="glass rounded-3xl p-6 shadow-lg border border-white/20">
+            <CalendarGrid
+              events={filteredEvents}
+              selectedDate={selectedDate}
+              onDateSelect={handleDateSelect}
+              onMonthChange={setCurrentMonth}
+            />
+          </div>
 
-        {/* 카테고리 필터 (다중 선택) */}
-        <MultiSelectFilter
-          label="카테고리"
-          options={CATEGORIES}
-          selected={selectedCategories}
-          onToggle={toggleCategory}
-          onClear={() => setSelectedCategories([])}
-        />
+          {/* Mobile Filter Toggle */}
+          <div className="lg:hidden">
+            <button
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="w-full flex items-center justify-center gap-2 p-3 glass rounded-xl font-medium text-foreground hover:bg-white/10 transition-colors"
+            >
+              <Filter size={18} />
+              필터 {isFilterOpen ? '접기' : '열기'}
+            </button>
+          </div>
 
-        {/* 부서 필터 (다중 선택) */}
-        <MultiSelectFilter
-          label="부서"
-          options={DEPARTMENTS}
-          selected={selectedDepartments}
-          onToggle={toggleDepartment}
-          onClear={() => setSelectedDepartments([])}
-        />
+          {/* Filters (Desktop: Always visible, Mobile: Toggle) */}
+          <div className={`space-y-6 transition-all duration-300 ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
+            <div className="glass rounded-2xl p-5 space-y-4">
+              <MultiSelectFilter
+                label="카테고리"
+                options={CATEGORIES}
+                selected={selectedCategories}
+                onToggle={toggleCategory}
+                onClear={() => setSelectedCategories([])}
+              />
+              <div className="h-px bg-border/50" />
+              <MultiSelectFilter
+                label="부서"
+                options={DEPARTMENTS}
+                selected={selectedDepartments}
+                onToggle={toggleDepartment}
+                onClear={() => setSelectedDepartments([])}
+              />
+            </div>
+          </div>
+        </div>
 
-        {/* 선택된 날짜의 일정 목록 */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <h2 className="text-lg font-semibold dark:text-white">
-              {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 일정
+        {/* Right Column: Selected Date Events */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <span className="text-primary">{selectedDate.getDate()}일</span>
+              <span className="text-muted-foreground text-base font-medium">
+                {selectedDate.toLocaleString('ko-KR', { weekday: 'long' })}
+              </span>
             </h2>
             {isAdmin && (
               <button
                 onClick={handleCreateEvent}
-                className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors min-h-[44px]"
+                className="flex items-center gap-1 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95"
               >
                 <Plus size={16} />
                 일정 추가
@@ -209,26 +241,34 @@ export default function Home() {
             )}
           </div>
 
-          {isEventsLoading ? (
-            <div className="space-y-3">
-              <EventSkeleton />
-              <EventSkeleton />
-            </div>
-          ) : selectedDateEvents.length > 0 ? (
-            <div className="grid gap-3">
-              {selectedDateEvents.map(event => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  onClick={() => handleEventClick(event)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-10 text-gray-400 bg-white dark:bg-gray-800 rounded-xl border border-dashed dark:border-gray-700">
-              일정이 없습니다.
-            </div>
-          )}
+          <div className="space-y-3 min-h-[300px]">
+            {isEventsLoading ? (
+              <>
+                <EventSkeleton />
+                <EventSkeleton />
+              </>
+            ) : selectedDateEvents.length > 0 ? (
+              <div className="grid gap-3">
+                {selectedDateEvents.map((event, index) => (
+                  <div
+                    key={event.id}
+                    className="animate-slide-up"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <EventCard
+                      event={event}
+                      onClick={() => handleEventClick(event)}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 glass rounded-2xl border border-dashed border-muted-foreground/30 text-muted-foreground">
+                <CalendarIcon size={48} className="mb-4 opacity-20" />
+                <p>등록된 일정이 없습니다.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -255,7 +295,11 @@ export default function Home() {
       />
 
       {/* Enigma 입력 (항상 표시 - isAdmin이 false이고 로딩이 완료됐을 때) */}
-      {!isAdmin && !isAdminLoading && <EnigmaInput onVerify={handleAdminVerify} />}
+      {!isAdmin && !isAdminLoading && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <EnigmaInput onVerify={handleAdminVerify} />
+        </div>
+      )}
     </main>
   );
 }

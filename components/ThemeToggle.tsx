@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -14,9 +14,7 @@ export default function ThemeToggle() {
   // 마운트 전에는 빈 버튼 렌더링 (SSR 에러 방지)
   if (!mounted) {
     return (
-      <button className="p-2 rounded-full" aria-label="테마 변경">
-        <Moon size={20} className="text-gray-600" />
-      </button>
+      <div className="w-10 h-10 rounded-full bg-muted/50" />
     );
   }
 
@@ -25,18 +23,26 @@ export default function ThemeToggle() {
 
 function ThemeToggleClient() {
   const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   return (
     <button
-      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="relative w-10 h-10 rounded-full glass hover:bg-white/20 transition-colors flex items-center justify-center overflow-hidden group"
       aria-label="테마 변경"
     >
-      {resolvedTheme === 'dark' ? (
-        <Sun size={20} className="text-yellow-400" />
-      ) : (
-        <Moon size={20} className="text-gray-600" />
-      )}
+      <div className="relative w-5 h-5">
+        <Sun
+          size={20}
+          className={`absolute inset-0 text-amber-400 transition-all duration-500 ease-in-out ${isDark ? 'rotate-90 opacity-0 scale-0' : 'rotate-0 opacity-100 scale-100'
+            }`}
+        />
+        <Moon
+          size={20}
+          className={`absolute inset-0 text-blue-400 transition-all duration-500 ease-in-out ${isDark ? 'rotate-0 opacity-100 scale-100' : '-rotate-90 opacity-0 scale-0'
+            }`}
+        />
+      </div>
     </button>
   );
 }
