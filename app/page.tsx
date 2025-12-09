@@ -12,7 +12,9 @@ import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useEvents } from '@/hooks/useEvents';
 import { Event } from '@/types';
-import { Plus, Calendar as CalendarIcon, Filter } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Filter, ArrowRight, Sparkles, Clock3 } from 'lucide-react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import ThemeToggle from '@/components/ThemeToggle';
 
 // 카테고리 목록 (전체 제외)
@@ -151,6 +153,18 @@ export default function Home() {
     });
   }, [events, selectedCategories, selectedDepartments]);
 
+  const upcomingEvents = useMemo(() => {
+    const now = new Date();
+    return filteredEvents
+      .filter(event => new Date(event.start_time) >= now)
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+      .slice(0, 3);
+  }, [filteredEvents]);
+
+  const selectedDateLabel = format(selectedDate, 'M월 d일 (EEE)', { locale: ko });
+  const monthLabel = format(currentMonth, 'yyyy년 M월', { locale: ko });
+  const hasActiveFilters = selectedCategories.length > 0 || selectedDepartments.length > 0;
+
   return (
     <main className="flex-1 pb-20">
       {/* Glassmorphic Header */}
@@ -175,6 +189,91 @@ export default function Home() {
       <div className="max-w-5xl mx-auto px-4 mt-4">
         <AnnouncementBanner isAdmin={isAdmin} />
       </div>
+
+      <section className="max-w-5xl mx-auto px-4 mt-4">
+        <div className="relative overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-r from-primary via-primary/90 to-secondary/80 text-primary-foreground shadow-xl">
+          <div className="absolute inset-0 opacity-20" aria-hidden>
+            <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
+            <div className="absolute right-10 bottom-0 h-32 w-32 rounded-full bg-secondary/40 blur-3xl" />
+          </div>
+          <div className="relative grid gap-6 p-6 md:p-8 md:grid-cols-2">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium">
+                <Sparkles size={14} /> 이번 달 {monthLabel}
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold leading-tight">학생자치회 일정을 한눈에 확인하세요</h2>
+              <p className="text-sm md:text-base text-primary-foreground/80">선택한 날짜와 필터에 맞춘 일정과 다가오는 이벤트를 빠르게 확인할 수 있습니다.</p>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                <div className="glass rounded-2xl bg-white/10 p-3 shadow-inner">
+                  <p className="text-xs text-primary-foreground/70">필터 적용 일정</p>
+                  <p className="text-2xl font-bold">{filteredEvents.length}</p>
+                  <p className="text-[11px] text-primary-foreground/70 mt-1">현재 조건에 해당하는 전체 일정</p>
+                </div>
+                <div className="glass rounded-2xl bg-white/10 p-3 shadow-inner">
+                  <p className="text-xs text-primary-foreground/70">선택한 날짜</p>
+                  <p className="text-2xl font-bold">{selectedDateEvents.length}</p>
+                  <p className="text-[11px] text-primary-foreground/70 mt-1">{selectedDateLabel}</p>
+                </div>
+                <div className="glass rounded-2xl bg-white/10 p-3 shadow-inner">
+                  <p className="text-xs text-primary-foreground/70">필터 상태</p>
+                  <p className="text-2xl font-bold">{hasActiveFilters ? 'ON' : 'OFF'}</p>
+                  <p className="text-[11px] text-primary-foreground/70 mt-1">카테고리/부서 선택 여부</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                {isAdmin && (
+                  <button
+                    onClick={handleCreateEvent}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold shadow-lg transition hover:bg-white/25 active:scale-95"
+                  >
+                    <Plus size={16} /> 일정 추가하기
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedDate(new Date())}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-sm font-semibold text-primary-foreground shadow-inner transition hover:bg-primary-foreground/20 active:scale-95"
+                >
+                  오늘 보기
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+            <div className="glass relative h-full rounded-2xl bg-white/15 p-4 shadow-lg">
+              <div className="flex items-center gap-2 text-sm font-semibold text-primary-foreground/90">
+                <Clock3 size={16} /> 다가오는 일정
+              </div>
+              <div className="mt-3 space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                {upcomingEvents.length > 0 ? (
+                  upcomingEvents.map((event) => (
+                    <div key={event.id} className="rounded-xl border border-white/10 bg-white/10 p-3 shadow-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold line-clamp-1">{event.title}</p>
+                        {event.category && (
+                          <span className="rounded-full bg-primary-foreground/10 px-2 py-0.5 text-[11px] font-semibold text-primary-foreground/80">
+                            {event.category}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-primary-foreground/80">
+                        {format(new Date(event.start_time), 'M월 d일 (EEE) a h:mm', { locale: ko })}
+                      </p>
+                      {event.location && (
+                        <p className="text-[11px] text-primary-foreground/70 mt-1">{event.location}</p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex h-full min-h-[180px] flex-col items-center justify-center text-primary-foreground/70">
+                    <CalendarIcon size={28} className="mb-2 opacity-70" />
+                    <p className="text-sm">다가오는 일정이 없습니다.</p>
+                    <p className="text-xs">필터를 조정하거나 새로운 일정을 추가해 보세요.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="max-w-5xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
         {/* Left Column: Calendar & Filters */}
