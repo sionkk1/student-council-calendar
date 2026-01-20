@@ -5,6 +5,8 @@ import { ko } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 import { Event } from '@/types';
 
+import MobileWeekView from './MobileWeekView';
+
 interface CalendarGridProps {
     events: Event[];
     selectedDate: Date;
@@ -22,52 +24,47 @@ export default function CalendarGrid({ events, selectedDate, onDateSelect, onMon
 
     return (
         <div className="w-full calendar-weekend">
-            <DayPicker
-                mode="single"
-                selected={selectedDate}
-                onSelect={onDateSelect}
-                onMonthChange={onMonthChange}
-                locale={ko}
-                showOutsideDays
-                className="p-0"
-                modifiers={{
-                    hasEvent: (date) => !!eventDays[date.toDateString()],
-                }}
-                modifiersStyles={{
-                    hasEvent: {
-                        fontWeight: 'bold',
-                        position: 'relative',
-                    }
-                }}
-                components={{
-                    DayContent: (props) => {
-                        const { date, activeModifiers } = props;
-                        const hasEvent = activeModifiers.hasEvent;
+            {/* 데스크탑: 전체 달력 */}
+            <div className="hidden md:block">
+                <DayPicker
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={onDateSelect}
+                    onMonthChange={onMonthChange}
+                    locale={ko}
+                    showOutsideDays
+                    className="p-0"
+                    modifiers={{
+                        hasEvent: (date) => !!eventDays[date.toDateString()],
+                    }}
+                    modifiersClassNames={{
+                        hasEvent: 'font-bold relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:animate-pulse'
+                    }}
+                    styles={{
+                        head_cell: {
+                            width: '100%',
+                            height: '40px',
+                            fontSize: '0.9rem',
+                            color: 'var(--muted-foreground)',
+                            fontWeight: 500,
+                        },
+                        table: { width: '100%', maxWidth: 'none' },
+                        day: { margin: 0, width: '100%', height: '50px' },
+                        caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
+                        nav_button: { color: 'var(--primary)' }
+                    }}
+                />
+            </div>
 
-                        return (
-                            <div className="relative w-full h-full flex items-center justify-center">
-                                <span>{date.getDate()}</span>
-                                {hasEvent && (
-                                    <div className="absolute bottom-1 w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
-                                )}
-                            </div>
-                        );
-                    }
-                }}
-                styles={{
-                    head_cell: {
-                        width: '100%',
-                        height: '40px',
-                        fontSize: '0.9rem',
-                        color: 'var(--muted-foreground)',
-                        fontWeight: 500,
-                    },
-                    table: { width: '100%', maxWidth: 'none' },
-                    day: { margin: 0, width: '100%', height: '50px' },
-                    caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
-                    nav_button: { color: 'var(--primary)' }
-                }}
-            />
+            {/* 모바일: 주간 뷰 */}
+            <div className="md:hidden">
+                <MobileWeekView
+                    selectedDate={selectedDate}
+                    events={events}
+                    onDateSelect={(date) => onDateSelect(date)}
+                    onMonthChange={onMonthChange}
+                />
+            </div>
         </div>
     );
 }

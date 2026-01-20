@@ -39,7 +39,8 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
         if (newWeekStart.getTime() !== currentWeekStart.getTime()) {
             setCurrentWeekStart(newWeekStart);
         }
-    }, [selectedDate]);
+    }, [selectedDate, currentWeekStart]);
+
 
     const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(currentWeekStart, i));
 

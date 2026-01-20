@@ -25,23 +25,27 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // 이전 달, 현재 달, 다음 달 모두 가져오기 (주간 뷰 경계 문제 해결)
       const prevMonth = subMonths(month, 1);
       const nextMonth = addMonths(month, 1);
       const startDate = format(startOfMonth(prevMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(nextMonth), 'yyyy-MM-dd');
-      
+
+      console.log(`[useEvents] Fetching events from ${startDate} to ${endDate}`);
+
       const res = await fetch(`/api/events?start=${startDate}&end=${endDate}`);
-      
+
       if (!res.ok) {
-        throw new Error('Failed to fetch events');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch events: ${res.status}`);
       }
-      
+
       const data = await res.json();
+      console.log(`[useEvents] Fetched ${data.length} events`);
       setEvents(data);
     } catch (err) {
-      console.error('Error fetching events:', err);
+      console.error('[useEvents] Error fetching events:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);

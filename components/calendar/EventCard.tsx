@@ -3,7 +3,7 @@
 import { Event } from '@/types';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Clock, MapPin } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface EventCardProps {
   event: Event;
@@ -19,7 +19,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function EventCard({ event, onClick }: EventCardProps) {
-  const categoryColor = CATEGORY_COLORS[event.category] || CATEGORY_COLORS['기타'];
+  const categoryColor = CATEGORY_COLORS[event.category ?? ''] || CATEGORY_COLORS['기타'];
 
   return (
     <div
@@ -30,7 +30,7 @@ export default function EventCard({ event, onClick }: EventCardProps) {
 
       <div className="flex items-start justify-between mb-2">
         <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${categoryColor}`}>
-          {event.category}
+          {event.category || '기타'}
         </span>
         {event.departments && event.departments.length > 0 && (
           <span className="text-xs text-muted-foreground truncate max-w-[100px]">
@@ -49,17 +49,14 @@ export default function EventCard({ event, onClick }: EventCardProps) {
           <Clock size={14} className="mr-1.5" />
           <span>
             {format(new Date(event.start_time), 'a h:mm', { locale: ko })}
-            {' - '}
-            {format(new Date(event.end_time), 'a h:mm', { locale: ko })}
+            {event.end_time && (
+              <>
+                {' - '}
+                {format(new Date(event.end_time), 'a h:mm', { locale: ko })}
+              </>
+            )}
           </span>
         </div>
-
-        {event.location && (
-          <div className="flex items-center text-sm text-muted-foreground">
-            <MapPin size={14} className="mr-1.5" />
-            <span className="truncate">{event.location}</span>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -208,16 +208,21 @@ body {
 }
 
 /* Weekend Colors */
-.calendar-weekend .rdp-head_cell:first-child,
-.calendar-weekend .rdp-day:nth-child(7n+1):not(.rdp-day_selected) {
-  color: #ef4444 !important;
-  /* Red */
+.calendar-weekend .rdp-day[aria-selected="false"]:nth-of-type(1) {
+    color: #ef4444 !important; /* Sunday (Red) */
 }
 
-.calendar-weekend .rdp-head_cell:last-child,
-.calendar-weekend .rdp-day:nth-child(7n):not(.rdp-day_selected) {
-  color: #3b82f6 !important;
-  /* Blue */
+.calendar-weekend .rdp-day[aria-selected="false"]:nth-of-type(7) {
+    color: #3b82f6 !important; /* Saturday (Blue) */
+}
+
+/* Header colors */
+.calendar-weekend .rdp-head_cell:nth-of-type(1) {
+    color: #ef4444 !important;
+}
+
+.calendar-weekend .rdp-head_cell:nth-of-type(7) {
+    color: #3b82f6 !important;
 }
 
 /* Ensure selected text is always readable */
