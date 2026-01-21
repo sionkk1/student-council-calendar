@@ -7,19 +7,31 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
   const auth = request.headers.get('authorization');
+  const isVercelCron = Boolean(request.headers.get('x-vercel-cron'));
 
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if ((!secret || auth !== `Bearer ${secret}`) && !isVercelCron) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const now = new Date();
-  const windowEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const timeZone = 'Asia/Seoul';
+  const formatDateKey = (date: Date) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const targetDateKey = formatDateKey(tomorrow);
+  const targetStart = new Date(`${targetDateKey}T00:00:00+09:00`);
+  const targetEnd = new Date(`${targetDateKey}T23:59:59.999+09:00`);
 
   const { data: events, error } = await supabaseAdmin
     .from('events')
     .select('*')
-    .gte('start_time', now.toISOString())
-    .lte('start_time', windowEnd.toISOString())
+    .gte('start_time', targetStart.toISOString())
+    .lte('start_time', targetEnd.toISOString())
     .order('start_time', { ascending: true });
 
   if (error) {
@@ -41,7 +53,7 @@ export async function GET(request: NextRequest) {
   let sent = 0;
 
   for (const event of events || []) {
-    const scheduledFor = event.start_time?.split('T')[0];
+    const scheduledFor = targetDateKey;
     if (!scheduledFor) continue;
     const { data: existing } = await supabaseAdmin
       .from('notification_log')
