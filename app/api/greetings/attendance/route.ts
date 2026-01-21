@@ -52,7 +52,9 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('morning_greeting_attendance')
-    .select('name, checked, status, checked_at, excused, excuse_reason, excused_at')
+    .select(
+      'name, checked, status, checked_at, excused, excuse_reason, excused_at, evidence_url, evidence_path, evidence_name, evidence_type, evidence_size, evidence_uploaded_at'
+    )
     .eq('date', date)
     .order('name', { ascending: true });
 
@@ -77,6 +79,8 @@ export async function PUT(request: NextRequest) {
       .map((row) => {
         const checked = Boolean(row.checked);
         const incomingStatus = ALLOWED_STATUS.has(row?.status) ? row.status : null;
+        const incomingCheckedAt = typeof row?.checked_at === 'string' ? row.checked_at : null;
+        const incomingExcusedAt = typeof row?.excused_at === 'string' ? row.excused_at : null;
         const status = checked ? incomingStatus ?? resolveStatus(row.date) : null;
         const excused = checked ? Boolean(row.excused) : false;
         const excuseReason =
@@ -90,8 +94,8 @@ export async function PUT(request: NextRequest) {
           status,
           excused,
           excuse_reason: excused ? excuseReason : null,
-          excused_at: excused ? nowIso : null,
-          checked_at: checked ? nowIso : null,
+          excused_at: excused ? incomingExcusedAt ?? nowIso : null,
+          checked_at: checked ? incomingCheckedAt ?? nowIso : null,
           updated_at: nowIso,
         };
       });
@@ -103,7 +107,9 @@ export async function PUT(request: NextRequest) {
     const { data, error } = await supabaseAdmin
       .from('morning_greeting_attendance')
       .upsert(payload, { onConflict: 'date,name' })
-      .select('name, checked, status, checked_at, excused, excuse_reason, excused_at, date');
+      .select(
+        'name, checked, status, checked_at, excused, excuse_reason, excused_at, evidence_url, evidence_path, evidence_name, evidence_type, evidence_size, evidence_uploaded_at, date'
+      );
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

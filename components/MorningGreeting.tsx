@@ -17,6 +17,12 @@ type AttendanceRow = {
   excused?: boolean | null;
   excuse_reason?: string | null;
   excused_at?: string | null;
+  evidence_url?: string | null;
+  evidence_path?: string | null;
+  evidence_name?: string | null;
+  evidence_type?: string | null;
+  evidence_size?: number | null;
+  evidence_uploaded_at?: string | null;
 };
 type SkipRow = { date: string; reason?: string };
 type MemberDraft = { department: string; name: string };
@@ -60,6 +66,10 @@ export default function MorningGreeting({
   const [drafts, setDrafts] = useState<Record<number, MemberDraft>>({});
   const [skipMap, setSkipMap] = useState<Record<string, string>>({});
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [excuseDrafts, setExcuseDrafts] = useState<Record<string, string>>({});
+  const [previewOpen, setPreviewOpen] = useState<Record<string, boolean>>({});
+  const [previewError, setPreviewError] = useState<Record<string, boolean>>({});
 
   const selectedWeekday = useMemo(() => {
     const day = selectedDate.getDay();
@@ -158,9 +168,24 @@ export default function MorningGreeting({
           excused: row.excused ?? null,
           excuse_reason: row.excuse_reason ?? null,
           excused_at: row.excused_at ?? null,
+          evidence_url: row.evidence_url ?? null,
+          evidence_path: row.evidence_path ?? null,
+          evidence_name: row.evidence_name ?? null,
+          evidence_type: row.evidence_type ?? null,
+          evidence_size: row.evidence_size ?? null,
+          evidence_uploaded_at: row.evidence_uploaded_at ?? null,
         };
       });
       setAttendance(next);
+      setExcuseDrafts((prev) => {
+        const nextDrafts = { ...prev };
+        data.forEach((row) => {
+          if (!(row.name in nextDrafts)) {
+            nextDrafts[row.name] = row.excuse_reason ?? '';
+          }
+        });
+        return nextDrafts;
+      });
     } catch (error) {
       console.error('Failed to fetch attendance:', error);
     } finally {
@@ -263,9 +288,13 @@ export default function MorningGreeting({
     }
   };
 
+  const handleExcuseReasonChange = (name: string, value: string) => {
+    setExcuseDrafts((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleExcuse = async (name: string, status: AttendanceStatus) => {
     if (!isAdmin) return;
-    const reason = window.prompt('면제 사유를 입력하세요 (선택)')?.trim() || null;
+    const reason = (excuseDrafts[name] ?? '').trim() || null;
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
     const previous = attendance[name];
     setAttendance((prev) => ({
@@ -292,6 +321,8 @@ export default function MorningGreeting({
           status,
           excused: true,
           excuse_reason: reason,
+          checked_at: previous?.checked_at ?? null,
+          excused_at: previous?.excused_at ?? null,
         }),
       });
       if (!res.ok) {
@@ -345,6 +376,7 @@ export default function MorningGreeting({
           status: previous.status ?? null,
           excused: false,
           excuse_reason: null,
+          checked_at: previous.checked_at ?? null,
         }),
       });
       if (!res.ok) {
@@ -356,6 +388,124 @@ export default function MorningGreeting({
     } catch (err) {
       setAttendance((prev) => ({ ...prev, [name]: previous }));
       const message = err instanceof Error ? err.message : '면제 취소에 실패했습니다.';
+      alert(message);
+    }
+  };
+
+  const handleDownloadEvidence = async (record: AttendanceRow) => {
+    if (!record.evidence_path) return;
+    try {
+      const res = await fetch(
+        `/api/greetings/attendance/download?path=${encodeURIComponent(record.evidence_path)}&name=${encodeURIComponent(
+          record.evidence_name || 'evidence'
+        )}`
+      );
+      if (!res.ok) {
+        throw new Error('다운로드 실패');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = record.evidence_name || 'evidence';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '다운로드에 실패했습니다.';
+      alert(message);
+    }
+  };
+
+  const handleTogglePreview = (name: string) => {
+    setPreviewError((prev) => ({ ...prev, [name]: false }));
+    setPreviewOpen((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  const buildPreviewSrc = (record: AttendanceRow) => {
+    if (record.evidence_path) {
+      const type = record.evidence_type || 'image/jpeg';
+      return `/api/greetings/attendance/preview?path=${encodeURIComponent(record.evidence_path)}&type=${encodeURIComponent(
+        type
+      )}`;
+    }
+    if (record.evidence_url) {
+      return record.evidence_url;
+    }
+    return null;
+  };
+
+  const handleSaveEvidenceLink = async (name: string) => {
+    if (!isAdmin) return;
+    const url = window.prompt('인증 사진 링크를 입력하세요 (http/https)')?.trim();
+    if (!url) return;
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    const previous = attendance[name];
+    try {
+      const res = await fetch('/api/greetings/attendance/evidence', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: dateKey, name, url }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || '링크 저장에 실패했습니다.');
+      }
+      const members = schedule[selectedWeekday] ?? [];
+      await loadAttendance(dateKey, members);
+    } catch (err) {
+      setAttendance((prev) => ({ ...prev, [name]: previous ?? prev[name] }));
+      const message = err instanceof Error ? err.message : '링크 저장에 실패했습니다.';
+      alert(message);
+    }
+  };
+
+  const handleUploadEvidence = async (name: string, file: File | null) => {
+    if (!file) return;
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    const members = schedule[selectedWeekday] ?? [];
+    setUploading((prev) => ({ ...prev, [name]: true }));
+    try {
+      const formData = new FormData();
+      formData.append('date', dateKey);
+      formData.append('name', name);
+      formData.append('file', file);
+      const res = await fetch('/api/greetings/attendance/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || '업로드에 실패했습니다.');
+      }
+      await loadAttendance(dateKey, members);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '업로드에 실패했습니다.';
+      alert(message);
+    } finally {
+      setUploading((prev) => ({ ...prev, [name]: false }));
+    }
+  };
+
+  const handleRemoveEvidence = async (name: string) => {
+    if (!isAdmin) return;
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    try {
+      const res = await fetch(
+        `/api/greetings/attendance/evidence?date=${encodeURIComponent(dateKey)}&name=${encodeURIComponent(name)}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || '증빙 삭제에 실패했습니다.');
+      }
+      setPreviewOpen((prev) => ({ ...prev, [name]: false }));
+      setPreviewError((prev) => ({ ...prev, [name]: false }));
+      const members = schedule[selectedWeekday] ?? [];
+      await loadAttendance(dateKey, members);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '증빙 삭제에 실패했습니다.';
       alert(message);
     }
   };
@@ -624,6 +774,8 @@ export default function MorningGreeting({
                 const checked = Boolean(record?.checked);
                 const status = record?.status ?? (checked ? 'on_time' : null);
                 const excused = Boolean(record?.excused);
+                const hasEvidence = Boolean(record?.evidence_url || record?.evidence_path);
+                const isUploading = Boolean(uploading[member]);
                 const statusLabel = !checked
                   ? '미체크'
                   : excused
@@ -667,36 +819,130 @@ export default function MorningGreeting({
                     {record?.excuse_reason && (
                       <p className="text-[10px] text-muted-foreground">사유: {record.excuse_reason}</p>
                     )}
-                    {isAdmin && (
-                      <div className="flex flex-wrap gap-2">
-                        {record?.excused ? (
+                    {hasEvidence && (
+                      <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                        <span className="font-semibold text-foreground">증빙</span>
+                        {record?.evidence_url && (
+                          <a
+                            href={record.evidence_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline underline-offset-2"
+                          >
+                            링크 보기
+                          </a>
+                        )}
+                        {record?.evidence_path && (
                           <button
                             type="button"
-                            onClick={() => handleClearExcuse(member)}
-                            className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                            onClick={() => handleDownloadEvidence(record)}
+                            className="underline underline-offset-2"
                           >
-                            면제 취소
+                            사진 다운로드
                           </button>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleExcuse(member, 'late')}
-                              className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                            >
-                              지각 면제
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleExcuse(member, 'absent')}
-                              className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                            >
-                              결석 면제
-                            </button>
-                          </>
+                        )}
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePreview(member)}
+                            className="underline underline-offset-2"
+                          >
+                            {previewOpen[member] ? '미리보기 닫기' : '미리보기'}
+                          </button>
                         )}
                       </div>
                     )}
+                    {isAdmin && hasEvidence && previewOpen[member] && (
+                      <div className="mt-2">
+                        {buildPreviewSrc(record) ? (
+                          <img
+                            src={buildPreviewSrc(record) ?? ''}
+                            alt="증빙 사진 미리보기"
+                            className="h-20 w-20 rounded-lg border border-white/10 object-cover"
+                            loading="lazy"
+                            onError={() => setPreviewError((prev) => ({ ...prev, [member]: true }))}
+                          />
+                        ) : null}
+                        {previewError[member] && (
+                          <p className="text-[10px] text-rose-500">미리보기에 실패했습니다.</p>
+                        )}
+                      </div>
+                    )}
+                    {isAdmin && (
+                      <>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <input
+                            value={excuseDrafts[member] ?? ''}
+                            onChange={(event) => handleExcuseReasonChange(member, event.target.value)}
+                            placeholder="면제 사유 입력 (선택)"
+                            className="min-w-[120px] flex-1 rounded-lg border border-border bg-background/80 px-2 py-1 text-[11px] text-foreground"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {record?.excused ? (
+                            <button
+                              type="button"
+                              onClick={() => handleClearExcuse(member)}
+                              className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              면제 취소
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleExcuse(member, 'late')}
+                                className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                              >
+                                지각 면제
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleExcuse(member, 'absent')}
+                                className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                              >
+                                결석 면제
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <label className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground cursor-pointer">
+                        {isUploading ? '업로드 중...' : '사진 업로드'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            const file = event.currentTarget.files?.[0] ?? null;
+                            event.currentTarget.value = '';
+                            if (!file) return;
+                            handleUploadEvidence(member, file);
+                          }}
+                          disabled={isUploading}
+                        />
+                      </label>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => handleSaveEvidenceLink(member)}
+                          className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                        >
+                          링크 등록
+                        </button>
+                      )}
+                      {isAdmin && hasEvidence && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveEvidence(member)}
+                          className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                        >
+                          증빙 삭제
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -705,6 +951,7 @@ export default function MorningGreeting({
           <p className="mt-2 text-[11px] text-muted-foreground">
             07:40 이후 체크는 지각, 08:10 이후 체크는 결석으로 처리됩니다.
           </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">사진 증빙은 3일 후 자동 삭제됩니다.</p>
           {!isAdmin && (
             <p className="mt-2 text-[11px] text-muted-foreground">
               출석 체크는 관리자만 가능합니다.
