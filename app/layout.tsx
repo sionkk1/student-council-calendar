@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -49,6 +50,7 @@ export default function RootLayout({
             {children}
           </div>
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
