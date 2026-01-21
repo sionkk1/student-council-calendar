@@ -131,37 +131,71 @@ export default function CalendarGrid({
                         </button>
                     </div>
                 )}
-                <DayPicker
-                    mode={rangeMode ? 'range' : 'single'}
-                    selected={rangeMode ? selectedRange : selectedDate}
-                    onSelect={rangeMode ? handleRangeSelect : onDateSelect}
-                    onMonthChange={onMonthChange}
-                    locale={ko}
-                    showOutsideDays
-                    className="p-0"
-                    components={{ DayButton }}
-                    modifiers={{
-                        hasEvent: (date) => events.some((event) => eventOccursOnDate(event, date)),
-                        dropTarget: (date) => !!dragOverDate && date.toDateString() === dragOverDate.toDateString(),
-                    }}
-                    modifiersClassNames={{
-                        hasEvent: 'font-bold relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:animate-pulse',
-                        dropTarget: 'bg-primary/15 ring-2 ring-primary/40',
-                    }}
-                    styles={{
-                        head_cell: {
-                            width: '100%',
-                            height: '40px',
-                            fontSize: '0.9rem',
-                            color: 'var(--muted-foreground)',
-                            fontWeight: 500,
-                        },
-                        table: { width: '100%', maxWidth: 'none' },
-                        day: { margin: 0, width: '100%', height: '50px' },
-                        caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
-                        nav_button: { color: 'var(--primary)' },
-                    }}
-                />
+                {rangeMode ? (
+                    <DayPicker
+                        mode="range"
+                        selected={selectedRange}
+                        onSelect={handleRangeSelect}
+                        onMonthChange={onMonthChange}
+                        locale={ko}
+                        showOutsideDays
+                        className="p-0"
+                        components={{ DayButton }}
+                        modifiers={{
+                            hasEvent: (date) => events.some((event) => eventOccursOnDate(event, date)),
+                            dropTarget: (date) => !!dragOverDate && date.toDateString() === dragOverDate.toDateString(),
+                        }}
+                        modifiersClassNames={{
+                            hasEvent: 'font-bold relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:animate-pulse',
+                            dropTarget: 'bg-primary/15 ring-2 ring-primary/40',
+                        }}
+                        styles={{
+                            head_cell: {
+                                width: '100%',
+                                height: '40px',
+                                fontSize: '0.9rem',
+                                color: 'var(--muted-foreground)',
+                                fontWeight: 500,
+                            },
+                            table: { width: '100%', maxWidth: 'none' },
+                            day: { margin: 0, width: '100%', height: '50px' },
+                            caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
+                            nav_button: { color: 'var(--primary)' },
+                        }}
+                    />
+                ) : (
+                    <DayPicker
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={onDateSelect}
+                        onMonthChange={onMonthChange}
+                        locale={ko}
+                        showOutsideDays
+                        className="p-0"
+                        components={{ DayButton }}
+                        modifiers={{
+                            hasEvent: (date) => events.some((event) => eventOccursOnDate(event, date)),
+                            dropTarget: (date) => !!dragOverDate && date.toDateString() === dragOverDate.toDateString(),
+                        }}
+                        modifiersClassNames={{
+                            hasEvent: 'font-bold relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:animate-pulse',
+                            dropTarget: 'bg-primary/15 ring-2 ring-primary/40',
+                        }}
+                        styles={{
+                            head_cell: {
+                                width: '100%',
+                                height: '40px',
+                                fontSize: '0.9rem',
+                                color: 'var(--muted-foreground)',
+                                fontWeight: 500,
+                            },
+                            table: { width: '100%', maxWidth: 'none' },
+                            day: { margin: 0, width: '100%', height: '50px' },
+                            caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
+                            nav_button: { color: 'var(--primary)' },
+                        }}
+                    />
+                )}
             </div>
 
             <div className="md:hidden">
@@ -213,40 +247,77 @@ export default function CalendarGrid({
                     />
                 ) : (
                     <div className="w-full glass rounded-2xl p-4 shadow-sm">
-                        <DayPicker
-                            mode={rangeMode ? 'range' : 'single'}
-                            selected={rangeMode ? selectedRange : selectedDate}
-                            onSelect={rangeMode ? handleRangeSelect : onDateSelect}
-                            onMonthChange={onMonthChange}
-                            locale={ko}
-                            showOutsideDays
-                            className="p-0 w-full"
-                            components={{ DayButton }}
-                            modifiers={{
-                                hasEvent: (date) => events.some((event) => eventOccursOnDate(event, date)),
-                                dropTarget: (date) => !!dragOverDate && date.toDateString() === dragOverDate.toDateString(),
-                            }}
-                            modifiersClassNames={{
-                                hasEvent: 'font-bold relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:animate-pulse',
-                                dropTarget: 'bg-primary/15 ring-2 ring-primary/40',
-                            }}
-                            styles={{
-                                head_cell: {
-                                    width: '100%',
-                                    height: '40px',
-                                    fontSize: '0.9rem',
-                                    color: 'var(--muted-foreground)',
-                                    fontWeight: 500,
-                                },
-                                table: { width: '100%', maxWidth: 'none' },
-                                day: { margin: 0, width: '100%', height: '40px' },
-                                caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
-                                nav_button: { color: 'var(--primary)' },
-                                months: { width: '100%' },
-                                month: { width: '100%' },
-                                caption_label: { fontSize: '1.2rem' },
-                            }}
-                        />
+                        {rangeMode ? (
+                            <DayPicker
+                                mode="range"
+                                selected={selectedRange}
+                                onSelect={handleRangeSelect}
+                                onMonthChange={onMonthChange}
+                                locale={ko}
+                                showOutsideDays
+                                className="p-0 w-full"
+                                components={{ DayButton }}
+                                modifiers={{
+                                    hasEvent: (date) => events.some((event) => eventOccursOnDate(event, date)),
+                                    dropTarget: (date) => !!dragOverDate && date.toDateString() === dragOverDate.toDateString(),
+                                }}
+                                modifiersClassNames={{
+                                    hasEvent: 'font-bold relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:animate-pulse',
+                                    dropTarget: 'bg-primary/15 ring-2 ring-primary/40',
+                                }}
+                                styles={{
+                                    head_cell: {
+                                        width: '100%',
+                                        height: '40px',
+                                        fontSize: '0.9rem',
+                                        color: 'var(--muted-foreground)',
+                                        fontWeight: 500,
+                                    },
+                                    table: { width: '100%', maxWidth: 'none' },
+                                    day: { margin: 0, width: '100%', height: '40px' },
+                                    caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
+                                    nav_button: { color: 'var(--primary)' },
+                                    months: { width: '100%' },
+                                    month: { width: '100%' },
+                                    caption_label: { fontSize: '1.2rem' },
+                                }}
+                            />
+                        ) : (
+                            <DayPicker
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={onDateSelect}
+                                onMonthChange={onMonthChange}
+                                locale={ko}
+                                showOutsideDays
+                                className="p-0 w-full"
+                                components={{ DayButton }}
+                                modifiers={{
+                                    hasEvent: (date) => events.some((event) => eventOccursOnDate(event, date)),
+                                    dropTarget: (date) => !!dragOverDate && date.toDateString() === dragOverDate.toDateString(),
+                                }}
+                                modifiersClassNames={{
+                                    hasEvent: 'font-bold relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:animate-pulse',
+                                    dropTarget: 'bg-primary/15 ring-2 ring-primary/40',
+                                }}
+                                styles={{
+                                    head_cell: {
+                                        width: '100%',
+                                        height: '40px',
+                                        fontSize: '0.9rem',
+                                        color: 'var(--muted-foreground)',
+                                        fontWeight: 500,
+                                    },
+                                    table: { width: '100%', maxWidth: 'none' },
+                                    day: { margin: 0, width: '100%', height: '40px' },
+                                    caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
+                                    nav_button: { color: 'var(--primary)' },
+                                    months: { width: '100%' },
+                                    month: { width: '100%' },
+                                    caption_label: { fontSize: '1.2rem' },
+                                }}
+                            />
+                        )}
                     </div>
                 )}
             </div>
