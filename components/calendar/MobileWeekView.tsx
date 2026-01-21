@@ -62,26 +62,20 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
                 <h2 className="text-lg font-bold text-foreground pl-2">
                     {format(displayMonth, 'yyyy년 M월', { locale: ko })}
                 </h2>
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                     <button
                         type="button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            goToPrevWeek();
-                        }}
-                        className="p-2 hover:bg-white/20 rounded-full transition-colors text-foreground"
+                        onClick={goToPrevWeek}
+                        className="p-2 hover:bg-white/20 rounded-full transition-colors text-foreground active:scale-95"
+                        aria-label="Previous week"
                     >
                         <ChevronLeft size={20} />
                     </button>
                     <button
                         type="button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            goToNextWeek();
-                        }}
-                        className="p-2 hover:bg-white/20 rounded-full transition-colors text-foreground"
+                        onClick={goToNextWeek}
+                        className="p-2 hover:bg-white/20 rounded-full transition-colors text-foreground active:scale-95"
+                        aria-label="Next week"
                     >
                         <ChevronRight size={20} />
                     </button>

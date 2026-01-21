@@ -14,6 +14,7 @@ import { useEvents } from '@/hooks/useEvents';
 import { Event } from '@/types';
 import { Plus, Calendar as CalendarIcon, Filter } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
+import NotificationToggle from '@/components/notifications/NotificationToggle';
 
 // 카테고리 목록 (전체 제외)
 const CATEGORIES = ['회의', '행사', '공지', '학교', '기타'];
@@ -160,11 +161,14 @@ export default function Home() {
             <div className="p-2 bg-primary/10 rounded-xl text-primary">
               <CalendarIcon size={20} />
             </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold text-foreground">
               학생자치회 일정
             </h1>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <NotificationToggle />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

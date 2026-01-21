@@ -26,7 +26,7 @@ export default function EventCard({ event, onClick }: EventCardProps) {
       onClick={onClick}
       className="group relative overflow-hidden glass p-4 rounded-2xl border border-white/20 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer"
     >
-      <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
 
       <div className="flex items-start justify-between mb-2">
         <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${categoryColor}`}>
