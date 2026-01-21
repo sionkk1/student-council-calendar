@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    
+
     if (data) {
         const { data: subs } = await supabaseAdmin
             .from('push_subscriptions')
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         if (subs && subs.length > 0) {
             try {
                 const payload = {
-                    title: 'New Announcement',
+                    title: '학생자치회 전체 공지',
                     body: content,
                     url: '/',
                 };
