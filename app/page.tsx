@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { DateRange } from 'react-day-picker';
 import CalendarGrid from '@/components/calendar/CalendarGrid';
 import EventModal from '@/components/modals/EventModal';
@@ -46,9 +46,33 @@ export default function Home() {
   const [selectedRange, setSelectedRange] = useState<DateRange | null>(null);
   const [isMoveMode, setIsMoveMode] = useState(false);
   const [movingEventId, setMovingEventId] = useState<string | null>(null);
+  const [isDndDebug, setIsDndDebug] = useState(false);
+  const [dndDebugInfo, setDndDebugInfo] = useState<string>('대기 중');
 
   const { isAdmin, isLoading: isAdminLoading, login, logout } = useAdmin();
   const { events, isLoading: isEventsLoading, createEvent, createEvents, updateEvent, deleteEvent } = useEvents(currentMonth);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const enabled = process.env.NODE_ENV === 'development'
+      || process.env.NEXT_PUBLIC_DND_DEBUG === '1'
+      || window.location.search.includes('dndDebug=1');
+    setIsDndDebug(enabled);
+  }, []);
+
+  useEffect(() => {
+    if (!isDndDebug || typeof window === 'undefined') return;
+    const handler = (event: globalThis.Event) => {
+      const detail = (event as CustomEvent).detail;
+      try {
+        setDndDebugInfo(JSON.stringify(detail));
+      } catch {
+        setDndDebugInfo(String(detail));
+      }
+    };
+    window.addEventListener('dnd-debug', handler as EventListener);
+    return () => window.removeEventListener('dnd-debug', handler as EventListener);
+  }, [isDndDebug]);
 
   const toggleCategory = (cat: string) => {
     if (selectedCategories.includes(cat)) {
@@ -120,9 +144,12 @@ export default function Home() {
 
   const logDnd = (...args: unknown[]) => {
     if (typeof window === 'undefined') return;
-    const enabled = process.env.NEXT_PUBLIC_DND_DEBUG === '1' || window.location.search.includes('dndDebug=1');
+    const enabled = process.env.NODE_ENV === 'development'
+      || process.env.NEXT_PUBLIC_DND_DEBUG === '1'
+      || window.location.search.includes('dndDebug=1');
     if (enabled) {
       console.log(...args);
+      window.dispatchEvent(new CustomEvent('dnd-debug', { detail: args }));
     }
   };
 
@@ -366,6 +393,16 @@ export default function Home() {
       {!isAdmin && !isAdminLoading && (
         <div className="fixed bottom-4 right-4 z-50">
           <EnigmaInput onVerify={handleAdminVerify} />
+        </div>
+      )}
+
+      {isDndDebug && (
+        <div className="fixed bottom-4 left-4 z-50 max-w-[320px] rounded-xl border border-primary/30 bg-background/90 p-3 text-xs text-foreground shadow-lg backdrop-blur">
+          <div className="mb-2 font-semibold text-primary">DND DEBUG</div>
+          <div>admin: {String(isAdmin)}</div>
+          <div>moveMode: {String(isMoveMode)}</div>
+          <div>movingEventId: {movingEventId ?? '-'}</div>
+          <div className="mt-2 break-all text-muted-foreground">{dndDebugInfo}</div>
         </div>
       )}
     </main>

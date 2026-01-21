@@ -36,9 +36,12 @@ export default function CalendarGrid({
 
     const logDnd = (...args: unknown[]) => {
         if (typeof window === 'undefined') return;
-        const enabled = process.env.NEXT_PUBLIC_DND_DEBUG === '1' || window.location.search.includes('dndDebug=1');
+        const enabled = process.env.NODE_ENV === 'development'
+            || process.env.NEXT_PUBLIC_DND_DEBUG === '1'
+            || window.location.search.includes('dndDebug=1');
         if (enabled) {
             console.log(...args);
+            window.dispatchEvent(new CustomEvent('dnd-debug', { detail: args }));
         }
     };
 

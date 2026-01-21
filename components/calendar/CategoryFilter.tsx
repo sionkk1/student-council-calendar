@@ -3,7 +3,7 @@
 import { X } from 'lucide-react';
 
 interface CategoryFilterProps {
-  categories: string[];
+  categories: readonly string[];
   selected: string;
   onSelect: (category: string) => void;
 }
@@ -31,7 +31,7 @@ export default function CategoryFilter({ categories, selected, onSelect }: Categ
 // 다중 선택 필터
 interface MultiSelectFilterProps {
   label: string;
-  options: string[];
+  options: readonly string[];
   selected: string[];
   onToggle: (option: string) => void;
   onClear: () => void;
