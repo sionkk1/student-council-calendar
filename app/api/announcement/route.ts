@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { sendToSubscriptions } from '@/lib/push';
+import { sendToSubscriptions, type StoredSubscription } from '@/lib/push';
 
 export const runtime = 'nodejs';
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
                     body: content,
                     url: '/',
                 };
-                const { expiredEndpoints } = await sendToSubscriptions(subs as any, payload);
+                const { expiredEndpoints } = await sendToSubscriptions(subs as StoredSubscription[], payload);
                 if (expiredEndpoints.length > 0) {
                     await supabaseAdmin.from('push_subscriptions').delete().in('endpoint', expiredEndpoints);
                 }

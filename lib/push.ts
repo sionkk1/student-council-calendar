@@ -1,12 +1,21 @@
-﻿import webpush from 'web-push';
+import webpush from 'web-push';
 
-type StoredSubscription = { endpoint: string; subscription: PushSubscription };
+export type StoredSubscription = { endpoint: string; subscription: PushSubscription };
+type WebPushError = { statusCode?: number };
 
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 const vapidSubject = process.env.VAPID_SUBJECT;
 
 let configured = false;
+
+const getStatusCode = (error: unknown) => {
+  if (error && typeof error === 'object' && 'statusCode' in error) {
+    const value = (error as WebPushError).statusCode;
+    return typeof value === 'number' ? value : undefined;
+  }
+  return undefined;
+};
 
 export function ensureWebPushConfig() {
   if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
@@ -30,8 +39,9 @@ export async function sendToSubscriptions(
     subscriptions.map(async (sub) => {
       try {
         await webpush.sendNotification(sub.subscription, body);
-      } catch (error: any) {
-        if (error?.statusCode === 404 || error?.statusCode === 410) {
+      } catch (error: unknown) {
+        const statusCode = getStatusCode(error);
+        if (statusCode === 404 || statusCode === 410) {
           expiredEndpoints.push(sub.endpoint);
         }
         throw error;
