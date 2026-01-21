@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { addDays, format, startOfWeek } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Check, Edit2, Plus, X } from 'lucide-react';
@@ -8,7 +8,16 @@ import { cn } from '@/lib/utils';
 import { DEPARTMENTS } from '@/constants';
 
 type GreetingRow = { weekday: number; members: string[] };
-type AttendanceRow = { name: string; checked: boolean };
+type AttendanceStatus = 'on_time' | 'late' | 'absent';
+type AttendanceRow = {
+  name: string;
+  checked: boolean;
+  status?: AttendanceStatus | null;
+  checked_at?: string | null;
+  excused?: boolean | null;
+  excuse_reason?: string | null;
+  excused_at?: string | null;
+};
 type SkipRow = { date: string; reason?: string };
 type MemberDraft = { department: string; name: string };
 
@@ -46,7 +55,7 @@ export default function MorningGreeting({
   const [schedule, setSchedule] = useState<Record<number, string[]>>({});
   const [editMode, setEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [attendance, setAttendance] = useState<Record<string, boolean>>({});
+  const [attendance, setAttendance] = useState<Record<string, AttendanceRow>>({});
   const [isAttendanceLoading, setIsAttendanceLoading] = useState(false);
   const [drafts, setDrafts] = useState<Record<number, MemberDraft>>({});
   const [skipMap, setSkipMap] = useState<Record<string, string>>({});
@@ -128,6 +137,37 @@ export default function MorningGreeting({
     });
   }, [editMode]);
 
+  const loadAttendance = useCallback(async (dateKey: string, members: string[]) => {
+    if (members.length === 0) {
+      setAttendance({});
+      return;
+    }
+
+    setIsAttendanceLoading(true);
+    try {
+      const res = await fetch(`/api/greetings/attendance?date=${dateKey}`);
+      if (!res.ok) return;
+      const data: AttendanceRow[] = await res.json();
+      const next: Record<string, AttendanceRow> = {};
+      data.forEach((row) => {
+        next[row.name] = {
+          name: row.name,
+          checked: Boolean(row.checked),
+          status: row.status ?? null,
+          checked_at: row.checked_at ?? null,
+          excused: row.excused ?? null,
+          excuse_reason: row.excuse_reason ?? null,
+          excused_at: row.excused_at ?? null,
+        };
+      });
+      setAttendance(next);
+    } catch (error) {
+      console.error('Failed to fetch attendance:', error);
+    } finally {
+      setIsAttendanceLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchAttendance = async () => {
       const weekday = selectedWeekday;
@@ -143,30 +183,11 @@ export default function MorningGreeting({
       }
 
       const members = schedule[weekday] ?? [];
-      if (members.length === 0) {
-        setAttendance({});
-        return;
-      }
-
-      setIsAttendanceLoading(true);
-      try {
-        const res = await fetch(`/api/greetings/attendance?date=${dateKey}`);
-        if (!res.ok) return;
-        const data: AttendanceRow[] = await res.json();
-        const next: Record<string, boolean> = {};
-        data.forEach((row) => {
-          next[row.name] = Boolean(row.checked);
-        });
-        setAttendance(next);
-      } catch (error) {
-        console.error('Failed to fetch attendance:', error);
-      } finally {
-        setIsAttendanceLoading(false);
-      }
+      await loadAttendance(dateKey, members);
     };
 
     fetchAttendance();
-  }, [selectedDate, schedule, selectedWeekday, skipMap]);
+  }, [selectedDate, schedule, selectedWeekday, skipMap, loadAttendance]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -196,8 +217,20 @@ export default function MorningGreeting({
   const handleToggleAttendance = async (name: string) => {
     if (!isAdmin) return;
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    const nextChecked = !attendance[name];
-    setAttendance((prev) => ({ ...prev, [name]: nextChecked }));
+    const previous = attendance[name];
+    const nextChecked = !previous?.checked;
+    setAttendance((prev) => ({
+      ...prev,
+      [name]: {
+        name,
+        checked: nextChecked,
+        status: nextChecked ? previous?.status ?? null : null,
+        checked_at: nextChecked ? previous?.checked_at ?? null : null,
+        excused: nextChecked ? previous?.excused ?? null : null,
+        excuse_reason: nextChecked ? previous?.excuse_reason ?? null : null,
+        excused_at: nextChecked ? previous?.excused_at ?? null : null,
+      },
+    }));
 
     try {
       const res = await fetch('/api/greetings/attendance', {
@@ -209,9 +242,120 @@ export default function MorningGreeting({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to update');
       }
+      const members = schedule[selectedWeekday] ?? [];
+      await loadAttendance(dateKey, members);
     } catch (err) {
-      setAttendance((prev) => ({ ...prev, [name]: !nextChecked }));
+      setAttendance((prev) => ({
+        ...prev,
+        [name]:
+          previous ?? {
+            name,
+            checked: !nextChecked,
+            status: null,
+            checked_at: null,
+            excused: null,
+            excuse_reason: null,
+            excused_at: null,
+          },
+      }));
       const message = err instanceof Error ? err.message : '출석 체크 저장에 실패했습니다.';
+      alert(message);
+    }
+  };
+
+  const handleExcuse = async (name: string, status: AttendanceStatus) => {
+    if (!isAdmin) return;
+    const reason = window.prompt('면제 사유를 입력하세요 (선택)')?.trim() || null;
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    const previous = attendance[name];
+    setAttendance((prev) => ({
+      ...prev,
+      [name]: {
+        name,
+        checked: true,
+        status,
+        checked_at: previous?.checked_at ?? null,
+        excused: true,
+        excuse_reason: reason,
+        excused_at: previous?.excused_at ?? null,
+      },
+    }));
+
+    try {
+      const res = await fetch('/api/greetings/attendance', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: dateKey,
+          name,
+          checked: true,
+          status,
+          excused: true,
+          excuse_reason: reason,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to update');
+      }
+      const members = schedule[selectedWeekday] ?? [];
+      await loadAttendance(dateKey, members);
+    } catch (err) {
+      setAttendance((prev) => ({
+        ...prev,
+        [name]:
+          previous ?? {
+            name,
+            checked: false,
+            status: null,
+            checked_at: null,
+            excused: null,
+            excuse_reason: null,
+            excused_at: null,
+          },
+      }));
+      const message = err instanceof Error ? err.message : '면제 저장에 실패했습니다.';
+      alert(message);
+    }
+  };
+
+  const handleClearExcuse = async (name: string) => {
+    if (!isAdmin) return;
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    const previous = attendance[name];
+    if (!previous) return;
+    setAttendance((prev) => ({
+      ...prev,
+      [name]: {
+        ...previous,
+        excused: false,
+        excuse_reason: null,
+        excused_at: null,
+      },
+    }));
+
+    try {
+      const res = await fetch('/api/greetings/attendance', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: dateKey,
+          name,
+          checked: previous.checked,
+          status: previous.status ?? null,
+          excused: false,
+          excuse_reason: null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to update');
+      }
+      const members = schedule[selectedWeekday] ?? [];
+      await loadAttendance(dateKey, members);
+    } catch (err) {
+      setAttendance((prev) => ({ ...prev, [name]: previous }));
+      const message = err instanceof Error ? err.message : '면제 취소에 실패했습니다.';
       alert(message);
     }
   };
@@ -476,26 +620,91 @@ export default function MorningGreeting({
           ) : (
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {(schedule[selectedWeekday] ?? []).map((member) => {
-                const checked = Boolean(attendance[member]);
+                const record = attendance[member];
+                const checked = Boolean(record?.checked);
+                const status = record?.status ?? (checked ? 'on_time' : null);
+                const excused = Boolean(record?.excused);
+                const statusLabel = !checked
+                  ? '미체크'
+                  : excused
+                  ? status === 'late'
+                    ? '지각 면제'
+                    : status === 'absent'
+                    ? '결석 면제'
+                    : '면제'
+                  : status === 'late'
+                  ? '지각'
+                  : status === 'absent'
+                  ? '결석'
+                  : '정상';
+                const timeLabel =
+                  record?.checked_at && !excused ? format(new Date(record.checked_at), 'HH:mm') : null;
+                const label = checked && timeLabel ? `${statusLabel} · ${timeLabel}` : statusLabel;
+                const statusClass = checked
+                  ? excused
+                    ? 'bg-slate-500/15 text-slate-600 dark:text-slate-300'
+                    : status === 'late'
+                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                    : status === 'absent'
+                    ? 'bg-rose-500/15 text-rose-600 dark:text-rose-300'
+                    : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
+                  : 'bg-transparent text-foreground';
                 return (
-                  <button
-                    key={member}
-                    type="button"
-                    onClick={() => handleToggleAttendance(member)}
-                    disabled={!isAdmin}
-                    className={cn(
-                      'flex items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-left text-xs transition-colors',
-                      checked ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' : 'bg-transparent text-foreground',
-                      !isAdmin && 'cursor-default'
+                  <div key={member} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleAttendance(member)}
+                      disabled={!isAdmin}
+                      className={cn(
+                        'flex items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-left text-xs transition-colors',
+                        statusClass,
+                        !isAdmin && 'cursor-default'
+                      )}
+                    >
+                      <span>{formatMember(member)}</span>
+                      <span className="text-[10px] font-semibold">{label}</span>
+                    </button>
+                    {record?.excuse_reason && (
+                      <p className="text-[10px] text-muted-foreground">사유: {record.excuse_reason}</p>
                     )}
-                  >
-                    <span>{formatMember(member)}</span>
-                    {checked ? <Check size={14} /> : <span className="text-[10px] text-muted-foreground">미체크</span>}
-                  </button>
+                    {isAdmin && (
+                      <div className="flex flex-wrap gap-2">
+                        {record?.excused ? (
+                          <button
+                            type="button"
+                            onClick={() => handleClearExcuse(member)}
+                            className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                          >
+                            면제 취소
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleExcuse(member, 'late')}
+                              className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              지각 면제
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleExcuse(member, 'absent')}
+                              className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              결석 면제
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
           )}
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            07:40 이후 체크는 지각, 08:10 이후 체크는 결석으로 처리됩니다.
+          </p>
           {!isAdmin && (
             <p className="mt-2 text-[11px] text-muted-foreground">
               출석 체크는 관리자만 가능합니다.
