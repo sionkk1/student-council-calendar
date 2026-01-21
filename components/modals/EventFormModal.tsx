@@ -36,7 +36,7 @@ export default function EventFormModal({
   const [isAllDay, setIsAllDay] = useState(false);
   const [category, setCategory] = useState('');
   const [departments, setDepartments] = useState<string[]>([]);
-  const [colorTag, setColorTag] = useState(DEFAULT_EVENT_COLOR);
+  const [colorTag, setColorTag] = useState<string>(DEFAULT_EVENT_COLOR);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('none');
   const [repeatUntil, setRepeatUntil] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
