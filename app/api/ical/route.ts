@@ -11,7 +11,9 @@ export async function GET() {
 
     const icalEvents = (events || []).map((event) => {
         const start = new Date(event.start_time);
-        const end = event.end_time ? new Date(event.end_time) : new Date(start.getTime() + 3600000);
+        const end = event.is_all_day
+            ? (event.end_time ? new Date(event.end_time) : new Date(start.getTime() + 86400000))
+            : (event.end_time ? new Date(event.end_time) : new Date(start.getTime() + 3600000));
 
         return `BEGIN:VEVENT
 UID:${event.id}@calendar

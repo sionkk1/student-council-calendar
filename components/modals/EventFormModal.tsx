@@ -1,20 +1,20 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Event } from '@/types';
-import { format } from 'date-fns';
+import { addDays, addMonths, addWeeks, format, isBefore, isEqual } from 'date-fns';
 
 interface EventFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   event: Event | null; // null = 새 일정 생성
   selectedDate: Date;
-  onSubmit: (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  selectedRange?: { from: Date; to: Date } | null;
+  onSubmit: (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'> | Omit<Event, 'id' | 'created_at' | 'updated_at'>[]) => Promise<void>;
 }
 
-const CATEGORIES = ['회의', '행사', '공지', '학교', '기타'];
-const DEPARTMENTS = ['회장단', '자치기획실', '문화체육부', '창의진로부', '언론정보부', '소통홍보부', '환경복지부', '생활인권부'];
+import { CATEGORIES, DEPARTMENTS } from '@/constants';
 const COLORS = [
   { name: '파랑', value: '#3b82f6' },
   { name: '빨강', value: '#ef4444' },
@@ -23,54 +23,72 @@ const COLORS = [
   { name: '보라', value: '#a855f7' },
 ];
 
+type RepeatMode = 'none' | 'daily' | 'weekly' | 'monthly';
+
 export default function EventFormModal({
   isOpen,
   onClose,
   event,
   selectedDate,
+  selectedRange,
   onSubmit,
 }: EventFormModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [category, setCategory] = useState('');
   const [departments, setDepartments] = useState<string[]>([]);
   const [colorTag, setColorTag] = useState('#3b82f6');
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>('none');
+  const [repeatUntil, setRepeatUntil] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 폼 초기화
   useEffect(() => {
-    if (isOpen) {
-      if (event) {
-        // 수정 모드
-        setTitle(event.title);
-        setDescription(event.description || '');
-        setStartDate(format(new Date(event.start_time), 'yyyy-MM-dd'));
-        setStartTime(format(new Date(event.start_time), 'HH:mm'));
-        setEndTime(event.end_time ? format(new Date(event.end_time), 'HH:mm') : '');
-        setIsAllDay(event.is_all_day);
-        setCategory(event.category || '');
-        setDepartments(event.departments || []);
-        setColorTag(event.color_tag || '#3b82f6');
-      } else {
-        // 생성 모드
-        setTitle('');
-        setDescription('');
-        setStartDate(format(selectedDate, 'yyyy-MM-dd'));
-        setStartTime('09:00');
-        setEndTime('10:00');
-        setIsAllDay(false);
-        setCategory('');
-        setDepartments([]);
-        setColorTag('#3b82f6');
-      }
-    }
-  }, [isOpen, event, selectedDate]);
+    if (!isOpen) return;
 
-  // 모달 열릴 때 스크롤 방지
+    if (event) {
+      const start = new Date(event.start_time);
+      const end = event.end_time ? new Date(event.end_time) : null;
+      setTitle(event.title);
+      setDescription(event.description || '');
+      setStartDate(format(start, 'yyyy-MM-dd'));
+      setStartTime(format(start, 'HH:mm'));
+      setIsAllDay(event.is_all_day);
+      if (end) {
+        const endDateValue = event.is_all_day ? addDays(end, -1) : end;
+        setEndDate(format(endDateValue, 'yyyy-MM-dd'));
+        setEndTime(format(end, 'HH:mm'));
+      } else {
+        setEndDate(format(start, 'yyyy-MM-dd'));
+        setEndTime('');
+      }
+      setCategory(event.category || '');
+      setDepartments(event.departments || []);
+      setColorTag(event.color_tag || '#3b82f6');
+      setRepeatMode('none');
+      setRepeatUntil('');
+    } else {
+      const baseDate = selectedRange?.from ?? selectedDate;
+      const baseEnd = selectedRange?.to ?? selectedDate;
+      setTitle('');
+      setDescription('');
+      setStartDate(format(baseDate, 'yyyy-MM-dd'));
+      setEndDate(format(baseEnd, 'yyyy-MM-dd'));
+      setStartTime('09:00');
+      setEndTime('10:00');
+      setIsAllDay(Boolean(selectedRange));
+      setCategory('');
+      setDepartments([]);
+      setColorTag('#3b82f6');
+      setRepeatMode('none');
+      setRepeatUntil(format(baseDate, 'yyyy-MM-dd'));
+    }
+  }, [isOpen, event, selectedDate, selectedRange]);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -89,26 +107,65 @@ export default function EventFormModal({
       return;
     }
 
+    const rawEndDate = endDate || startDate;
+    const safeEndDate = (isBefore(new Date(rawEndDate), new Date(startDate)) || isEqual(new Date(rawEndDate), new Date(startDate)))
+      ? startDate
+      : rawEndDate;
+
+    const startDateTime = isAllDay
+      ? new Date(`${startDate}T00:00:00`)
+      : new Date(`${startDate}T${startTime}`);
+
+    let endDateTime: Date | undefined;
+    if (isAllDay) {
+      if (safeEndDate && safeEndDate !== startDate) {
+        endDateTime = addDays(new Date(`${safeEndDate}T00:00:00`), 1);
+      }
+    } else if (endTime) {
+      const endDateValue = safeEndDate || startDate;
+      endDateTime = new Date(`${endDateValue}T${endTime}`);
+    }
+
+    const baseEvent: Omit<Event, 'id' | 'created_at' | 'updated_at'> = {
+      title: title.trim(),
+      description: description.trim() || undefined,
+      start_time: startDateTime.toISOString(),
+      end_time: endDateTime?.toISOString(),
+      is_all_day: isAllDay,
+      category: category || undefined,
+      departments: departments.length > 0 ? departments : undefined,
+      color_tag: colorTag,
+    };
+
     setIsSubmitting(true);
     try {
-      const startDateTime = isAllDay
-        ? new Date(`${startDate}T00:00:00`)
-        : new Date(`${startDate}T${startTime}`);
-      
-      const endDateTime = endTime && !isAllDay
-        ? new Date(`${startDate}T${endTime}`)
-        : undefined;
+      if (!event && repeatMode !== 'none' && repeatUntil) {
+        const repeatEnd = new Date(`${repeatUntil}T23:59:59`);
+        const occurrences: Omit<Event, 'id' | 'created_at' | 'updated_at'>[] = [];
+        const durationMs = endDateTime ? endDateTime.getTime() - startDateTime.getTime() : null;
 
-      await onSubmit({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        start_time: startDateTime.toISOString(),
-        end_time: endDateTime?.toISOString(),
-        is_all_day: isAllDay,
-        category: category || undefined,
-        departments: departments.length > 0 ? departments : undefined,
-        color_tag: colorTag,
-      });
+        let cursor = startDateTime;
+        while (cursor <= repeatEnd) {
+          const nextEnd = durationMs ? new Date(cursor.getTime() + durationMs) : undefined;
+          occurrences.push({
+            ...baseEvent,
+            start_time: cursor.toISOString(),
+            end_time: nextEnd?.toISOString(),
+          });
+
+          if (repeatMode === 'daily') {
+            cursor = addDays(cursor, 1);
+          } else if (repeatMode === 'weekly') {
+            cursor = addWeeks(cursor, 1);
+          } else {
+            cursor = addMonths(cursor, 1);
+          }
+        }
+
+        await onSubmit(occurrences);
+      } else {
+        await onSubmit(baseEvent);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -120,15 +177,12 @@ export default function EventFormModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
-      {/* 모바일: 전체 화면 */}
       <div className="md:hidden fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-y-auto">
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-4 py-3 flex justify-between items-center">
           <button onClick={onClose} className="p-2 -ml-2 dark:text-white">
             <X size={24} />
           </button>
-          <h2 className="text-lg font-semibold dark:text-white">
-            {event ? '일정 수정' : '새 일정'}
-          </h2>
+          <h2 className="text-lg font-semibold dark:text-white">{event ? '일정 수정' : '새 일정'}</h2>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting || !title.trim()}
@@ -145,6 +199,8 @@ export default function EventFormModal({
             setDescription={setDescription}
             startDate={startDate}
             setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
             startTime={startTime}
             setStartTime={setStartTime}
             endTime={endTime}
@@ -157,16 +213,18 @@ export default function EventFormModal({
             setDepartments={setDepartments}
             colorTag={colorTag}
             setColorTag={setColorTag}
+            repeatMode={repeatMode}
+            setRepeatMode={setRepeatMode}
+            repeatUntil={repeatUntil}
+            setRepeatUntil={setRepeatUntil}
+            disableRepeat={Boolean(event)}
           />
         </form>
       </div>
 
-      {/* 데스크탑: 중앙 모달 */}
       <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto z-50">
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-semibold dark:text-white">
-            {event ? '일정 수정' : '새 일정'}
-          </h2>
+          <h2 className="text-xl font-semibold dark:text-white">{event ? '일정 수정' : '새 일정'}</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full dark:text-white">
             <X size={20} />
           </button>
@@ -179,6 +237,8 @@ export default function EventFormModal({
             setDescription={setDescription}
             startDate={startDate}
             setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
             startTime={startTime}
             setStartTime={setStartTime}
             endTime={endTime}
@@ -191,6 +251,11 @@ export default function EventFormModal({
             setDepartments={setDepartments}
             colorTag={colorTag}
             setColorTag={setColorTag}
+            repeatMode={repeatMode}
+            setRepeatMode={setRepeatMode}
+            repeatUntil={repeatUntil}
+            setRepeatUntil={setRepeatUntil}
+            disableRepeat={Boolean(event)}
           />
           <div className="flex gap-3 pt-4">
             <button
@@ -221,6 +286,8 @@ interface FormContentProps {
   setDescription: (v: string) => void;
   startDate: string;
   setStartDate: (v: string) => void;
+  endDate: string;
+  setEndDate: (v: string) => void;
   startTime: string;
   setStartTime: (v: string) => void;
   endTime: string;
@@ -233,20 +300,28 @@ interface FormContentProps {
   setDepartments: (v: string[]) => void;
   colorTag: string;
   setColorTag: (v: string) => void;
+  repeatMode: RepeatMode;
+  setRepeatMode: (v: RepeatMode) => void;
+  repeatUntil: string;
+  setRepeatUntil: (v: string) => void;
+  disableRepeat?: boolean;
 }
 
 function FormContent({
   title, setTitle,
   description, setDescription,
   startDate, setStartDate,
+  endDate, setEndDate,
   startTime, setStartTime,
   endTime, setEndTime,
   isAllDay, setIsAllDay,
   category, setCategory,
   departments, setDepartments,
   colorTag, setColorTag,
+  repeatMode, setRepeatMode,
+  repeatUntil, setRepeatUntil,
+  disableRepeat,
 }: FormContentProps) {
-  
   const toggleDepartment = (dept: string) => {
     if (departments.includes(dept)) {
       setDepartments(departments.filter(d => d !== dept));
@@ -254,14 +329,11 @@ function FormContent({
       setDepartments([...departments, dept]);
     }
   };
-  
+
   return (
     <>
-      {/* 제목 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          제목 *
-        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">제목 *</label>
         <input
           type="text"
           value={title}
@@ -272,20 +344,27 @@ function FormContent({
         />
       </div>
 
-      {/* 날짜 */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          날짜
-        </label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">시작 날짜</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">종료 날짜</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white"
+          />
+        </div>
       </div>
 
-      {/* 종일 일정 */}
       <div className="flex items-center gap-3">
         <input
           type="checkbox"
@@ -294,18 +373,13 @@ function FormContent({
           onChange={(e) => setIsAllDay(e.target.checked)}
           className="w-5 h-5 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
         />
-        <label htmlFor="isAllDay" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          종일 일정
-        </label>
+        <label htmlFor="isAllDay" className="text-sm font-medium text-gray-700 dark:text-gray-300">종일 일정</label>
       </div>
 
-      {/* 시간 */}
       {!isAllDay && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              시작 시간
-            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">시작 시간</label>
             <input
               type="time"
               value={startTime}
@@ -314,9 +388,7 @@ function FormContent({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              종료 시간
-            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">종료 시간</label>
             <input
               type="time"
               value={endTime}
@@ -327,22 +399,45 @@ function FormContent({
         </div>
       )}
 
-      {/* 카테고리 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          카테고리
-        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">반복</label>
+        <div className="grid grid-cols-2 gap-3">
+          <select
+            value={repeatMode}
+            onChange={(e) => setRepeatMode(e.target.value as RepeatMode)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+            disabled={disableRepeat}
+          >
+            <option value="none">반복 없음</option>
+            <option value="daily">매일</option>
+            <option value="weekly">매주</option>
+            <option value="monthly">매월</option>
+          </select>
+          <input
+            type="date"
+            value={repeatUntil}
+            onChange={(e) => setRepeatUntil(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+            disabled={disableRepeat || repeatMode === 'none'}
+          />
+        </div>
+        {disableRepeat && (
+          <p className="text-xs text-muted-foreground mt-2">수정 모드에서는 반복 일정을 변경할 수 없습니다.</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">카테고리</label>
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setCategory(cat === category ? '' : cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors min-h-[44px] ${
-                category === cat
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors min-h-[44px] ${category === cat
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-              }`}
+                }`}
             >
               {cat}
             </button>
@@ -350,22 +445,18 @@ function FormContent({
         </div>
       </div>
 
-      {/* 부서 (다중 선택) */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          부서 (다중 선택 가능)
-        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">부서 (복수 선택)</label>
         <div className="flex flex-wrap gap-2">
           {DEPARTMENTS.map((dept) => (
             <button
               key={dept}
               type="button"
               onClick={() => toggleDepartment(dept)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors min-h-[36px] ${
-                departments.includes(dept)
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors min-h-[36px] ${departments.includes(dept)
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
-              }`}
+                }`}
             >
               {dept}
             </button>
@@ -373,22 +464,18 @@ function FormContent({
         </div>
       </div>
 
-      {/* 색상 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          색상
-        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">색상</label>
         <div className="flex gap-3">
           {COLORS.map((color) => (
             <button
               key={color.value}
               type="button"
               onClick={() => setColorTag(color.value)}
-              className={`w-10 h-10 rounded-full border-2 transition-transform ${
-                colorTag === color.value
+              className={`w-10 h-10 rounded-full border-2 transition-transform ${colorTag === color.value
                   ? 'border-gray-800 dark:border-white scale-110'
                   : 'border-transparent hover:scale-105'
-              }`}
+                }`}
               style={{ backgroundColor: color.value }}
               title={color.name}
             />
@@ -396,15 +483,12 @@ function FormContent({
         </div>
       </div>
 
-      {/* 설명 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          설명
-        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">설명</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="일정에 대한 설명을 입력하세요"
+          placeholder="일정 설명을 입력하세요"
           rows={4}
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-white dark:bg-gray-700 dark:text-white"
         />

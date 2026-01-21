@@ -2,9 +2,10 @@
 
 import { X, Calendar, AlignLeft, Edit, Trash2, FileText, Upload, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Event, MeetingMinutes } from '@/types';
+import { getAllDayEndDate } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
 interface EventModalProps {
@@ -303,6 +304,26 @@ function AdminActions({
 }
 
 function EventContent({ event }: { event: Event }) {
+    const start = new Date(event.start_time);
+    const end = event.end_time ? new Date(event.end_time) : null;
+    const allDayEnd = getAllDayEndDate(event);
+
+    const dateLabel = event.is_all_day && allDayEnd && !isSameDay(start, allDayEnd)
+        ? `${format(start, 'yyyy-MM-dd (EEE)', { locale: ko })} ~ ${format(allDayEnd, 'yyyy-MM-dd (EEE)', { locale: ko })}`
+        : format(start, 'yyyy-MM-dd (EEE)', { locale: ko });
+
+    let timeLabel = '';
+    if (event.is_all_day) {
+        timeLabel = 'All day';
+    } else if (end && !isSameDay(start, end)) {
+        timeLabel = `${format(start, 'MM/dd a h:mm', { locale: ko })} - ${format(end, 'MM/dd a h:mm', { locale: ko })}`;
+    } else {
+        timeLabel = format(start, 'a h:mm', { locale: ko });
+        if (end) {
+            timeLabel += ` - ${format(end, 'a h:mm', { locale: ko })}`;
+        }
+    }
+
     return (
         <>
             <div className="flex gap-4">
@@ -310,17 +331,8 @@ function EventContent({ event }: { event: Event }) {
                     <Calendar size={20} />
                 </div>
                 <div>
-                    <p className="font-medium text-gray-900">
-                        {format(new Date(event.start_time), 'yyyy년 M월 d일 (E)', { locale: ko })}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                        {event.is_all_day ? '종일' : (
-                            <>
-                                {format(new Date(event.start_time), 'a h:mm', { locale: ko })}
-                                {event.end_time && ` - ${format(new Date(event.end_time), 'a h:mm', { locale: ko })}`}
-                            </>
-                        )}
-                    </p>
+                    <p className="font-medium text-gray-900">{dateLabel}</p>
+                    <p className="text-sm text-gray-500 mt-0.5">{timeLabel}</p>
                 </div>
             </div>
 

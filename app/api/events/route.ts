@@ -11,8 +11,12 @@ export async function GET(request: NextRequest) {
 
     let query = supabase.from('events').select('*').order('start_time', { ascending: true });
     
-    if (startDate) query = query.gte('start_time', startDate);
-    if (endDate) query = query.lte('start_time', endDate);
+    if (startDate && endDate) {
+        query = query.or(`and(start_time.gte.${startDate},start_time.lte.${endDate}),and(end_time.gte.${startDate},start_time.lte.${endDate})`);
+    } else {
+        if (startDate) query = query.gte('start_time', startDate);
+        if (endDate) query = query.lte('start_time', endDate);
+    }
 
     const { data, error } = await query;
     
@@ -30,15 +34,16 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         console.log('[API] POST /events request:', body);
 
-        const { data, error } = await supabaseAdmin.from('events').insert(body).select().single();
+        const { data, error } = await supabaseAdmin.from('events').insert(body).select();
         
         if (error) {
             console.error('[API] POST /events error:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
         
-        console.log('[API] POST /events success:', data);
-        return NextResponse.json(data, { status: 201 });
+        const result = Array.isArray(body) ? data : data?.[0];
+        console.log('[API] POST /events success:', result);
+        return NextResponse.json(result, { status: 201 });
     } catch (e) {
         console.error('[API] POST /events unexpected error:', e);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { sendToSubscriptions } from '@/lib/push';
+
+export const runtime = 'nodejs';
 
 export async function GET() {
     const { data } = await supabaseAdmin
@@ -26,6 +29,34 @@ export async function POST(request: NextRequest) {
         .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    
+    if (data) {
+        const { data: subs } = await supabaseAdmin
+            .from('push_subscriptions')
+            .select('endpoint, subscription');
+
+        if (subs && subs.length > 0) {
+            try {
+                const payload = {
+                    title: 'New Announcement',
+                    body: content,
+                    url: '/',
+                };
+                const { expiredEndpoints } = await sendToSubscriptions(subs as any, payload);
+                if (expiredEndpoints.length > 0) {
+                    await supabaseAdmin.from('push_subscriptions').delete().in('endpoint', expiredEndpoints);
+                }
+                await supabaseAdmin.from('notification_log').upsert({
+                    type: 'announcement',
+                    announcement_id: data.id,
+                });
+            } catch (err) {
+                console.error('Push send failed:', err);
+            }
+        }
+    }
+
     return NextResponse.json(data);
 }
 

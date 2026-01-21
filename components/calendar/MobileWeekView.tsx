@@ -5,6 +5,7 @@ import { format, addDays, startOfWeek, isSameDay, addWeeks, subWeeks, getDay } f
 import { ko } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Event } from '@/types';
+import { eventOccursOnDate } from '@/lib/events';
 import { cn } from '@/lib/utils';
 
 interface MobileWeekViewProps {
@@ -87,7 +88,7 @@ export default function MobileWeekView({ selectedDate, events, onDateSelect, onM
             >
                 {weekDays.map((date) => {
                     const isSelected = isSameDay(date, selectedDate);
-                    const hasEvent = events.some(e => isSameDay(new Date(e.start_time), date));
+                    const hasEvent = events.some(e => eventOccursOnDate(e, date));
                     const dayColor = getDayColor(date, isSelected);
 
                     return (

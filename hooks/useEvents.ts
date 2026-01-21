@@ -10,6 +10,7 @@ interface UseEventsReturn {
   isLoading: boolean;
   error: string | null;
   createEvent: (event: Omit<Event, 'id' | 'created_at' | 'updated_at'>) => Promise<{ success: boolean; data?: Event; error?: string }>;
+  createEvents: (events: Omit<Event, 'id' | 'created_at' | 'updated_at'>[]) => Promise<{ success: boolean; data?: Event[]; error?: string }>;
   updateEvent: (id: string, event: Partial<Event>) => Promise<{ success: boolean; data?: Event; error?: string }>;
   deleteEvent: (id: string) => Promise<{ success: boolean; error?: string }>;
   refetch: () => Promise<void>;
@@ -20,6 +21,11 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const dedupeEvents = (items: Event[]) => {
+    const map = new Map<string, Event>();
+    items.forEach((item) => map.set(item.id, item));
+    return Array.from(map.values());
+  };
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -43,7 +49,7 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
 
       const data = await res.json();
       console.log(`[useEvents] Fetched ${data.length} events`);
-      setEvents(data);
+      setEvents(dedupeEvents(data));
     } catch (err) {
       console.error('[useEvents] Error fetching events:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -63,11 +69,7 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'events' },
         (payload) => {
-          setEvents(prev => {
-            // 중복 체크
-            if (prev.some(e => e.id === payload.new.id)) return prev;
-            return [...prev, payload.new as Event];
-          });
+          setEvents(prev => dedupeEvents([...prev, payload.new as Event]));
         }
       )
       .on(
@@ -122,11 +124,41 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
 
       const newEvent = await res.json();
       // 임시 이벤트를 실제 이벤트로 교체
-      setEvents(prev => prev.map(e => e.id === tempEvent.id ? newEvent : e));
+      setEvents(prev => {
+        const replaced = prev.map(e => e.id === tempEvent.id ? newEvent : e);
+        return dedupeEvents([...replaced, newEvent]);
+      });
       return { success: true, data: newEvent };
     } catch {
       await fetchEvents(); // 롤백
       return { success: false, error: '이벤트 생성에 실패했습니다.' };
+    }
+  };
+
+  const createEvents = async (eventsData: Omit<Event, 'id' | 'created_at' | 'updated_at'>[]) => {
+    try {
+      const res = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventsData),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        return { success: false, error: errorData.error };
+      }
+
+      const newEvents = await res.json();
+      const newEventsArray = Array.isArray(newEvents) ? newEvents : [newEvents];
+      setEvents(prev => {
+        const map = new Map(prev.map((event) => [event.id, event]));
+        newEventsArray.forEach((event) => map.set(event.id, event));
+        return Array.from(map.values());
+      });
+      return { success: true, data: newEventsArray };
+    } catch {
+      await fetchEvents();
+      return { success: false, error: '?대깽???앹꽦???ㅽ뙣?덉뒿?덈떎.' };
     }
   };
 
@@ -185,6 +217,7 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
     isLoading,
     error,
     createEvent,
+    createEvents,
     updateEvent,
     deleteEvent,
     refetch: fetchEvents,
