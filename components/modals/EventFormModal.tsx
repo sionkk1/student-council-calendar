@@ -3,25 +3,19 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Event } from '@/types';
+import { CATEGORIES, DEPARTMENTS, DEFAULT_EVENT_COLOR, EVENT_COLORS } from '@/constants';
 import { addDays, addMonths, addWeeks, format, isBefore, isEqual } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
 
 interface EventFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   event: Event | null; // null = 새 일정 생성
   selectedDate: Date;
-  selectedRange?: { from: Date; to: Date } | null;
+  selectedRange?: DateRange | null;
   onSubmit: (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'> | Omit<Event, 'id' | 'created_at' | 'updated_at'>[]) => Promise<void>;
 }
 
-import { CATEGORIES, DEPARTMENTS } from '@/constants';
-const COLORS = [
-  { name: '파랑', value: '#3b82f6' },
-  { name: '빨강', value: '#ef4444' },
-  { name: '초록', value: '#22c55e' },
-  { name: '노랑', value: '#eab308' },
-  { name: '보라', value: '#a855f7' },
-];
 
 type RepeatMode = 'none' | 'daily' | 'weekly' | 'monthly';
 
@@ -42,7 +36,7 @@ export default function EventFormModal({
   const [isAllDay, setIsAllDay] = useState(false);
   const [category, setCategory] = useState('');
   const [departments, setDepartments] = useState<string[]>([]);
-  const [colorTag, setColorTag] = useState('#3b82f6');
+  const [colorTag, setColorTag] = useState(DEFAULT_EVENT_COLOR);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('none');
   const [repeatUntil, setRepeatUntil] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +62,7 @@ export default function EventFormModal({
       }
       setCategory(event.category || '');
       setDepartments(event.departments || []);
-      setColorTag(event.color_tag || '#3b82f6');
+      setColorTag(event.color_tag || DEFAULT_EVENT_COLOR);
       setRepeatMode('none');
       setRepeatUntil('');
     } else {
@@ -83,7 +77,7 @@ export default function EventFormModal({
       setIsAllDay(Boolean(selectedRange));
       setCategory('');
       setDepartments([]);
-      setColorTag('#3b82f6');
+      setColorTag(DEFAULT_EVENT_COLOR);
       setRepeatMode('none');
       setRepeatUntil(format(baseDate, 'yyyy-MM-dd'));
     }
@@ -467,7 +461,7 @@ function FormContent({
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">색상</label>
         <div className="flex gap-3">
-          {COLORS.map((color) => (
+          {EVENT_COLORS.map((color) => (
             <button
               key={color.value}
               type="button"

@@ -14,10 +14,17 @@ const urlBase64ToUint8Array = (base64String: string) => {
   return outputArray;
 };
 
+const defaultTestPayload = {
+  title: '테스트 알림',
+  body: '푸시 알림 테스트입니다.',
+  url: '/',
+};
+
 export default function NotificationToggle() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
     const checkSupport = async () => {
@@ -91,6 +98,39 @@ export default function NotificationToggle() {
     alert('알림이 해제되었습니다.');
   };
 
+  const sendTestNotification = async () => {
+    if (isTesting) return;
+    setIsTesting(true);
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      const activeRegistration = registration ?? await navigator.serviceWorker.register('/sw.js');
+      const subscription = await activeRegistration.pushManager.getSubscription();
+
+      if (!subscription) {
+        alert('구독 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      const res = await fetch('/api/push/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription, payload: defaultTestPayload }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || '테스트 알림 전송에 실패했습니다.');
+      }
+
+      alert('테스트 알림을 전송했습니다. 잠시만 기다려 주세요.');
+    } catch (err) {
+      console.error('[NotificationToggle] test error:', err);
+      alert(err instanceof Error ? err.message : '테스트 알림 전송 중 오류가 발생했습니다.');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const toggleSubscription = async () => {
     if (isLoading) return;
     setIsLoading(true);
@@ -111,13 +151,25 @@ export default function NotificationToggle() {
   if (!isSupported) return null;
 
   return (
-    <button
-      onClick={toggleSubscription}
-      className="p-2 rounded-xl text-foreground/80 hover:bg-muted/50 transition-colors disabled:opacity-50"
-      aria-label="알림 설정"
-      disabled={isLoading}
-    >
-      {isSubscribed ? <Bell size={20} className="text-primary" /> : <BellOff size={20} />}
-    </button>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={toggleSubscription}
+        className="p-2 rounded-xl text-foreground/80 hover:bg-muted/50 transition-colors disabled:opacity-50"
+        aria-label="알림 설정"
+        disabled={isLoading}
+      >
+        {isSubscribed ? <Bell size={20} className="text-primary" /> : <BellOff size={20} />}
+      </button>
+      {isSubscribed && (
+        <button
+          onClick={sendTestNotification}
+          className="px-2.5 py-1 rounded-lg text-xs font-medium border border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-muted-foreground/60 transition-colors disabled:opacity-50"
+          disabled={isTesting}
+          aria-label="테스트 알림 보내기"
+        >
+          테스트
+        </button>
+      )}
+    </div>
   );
 }

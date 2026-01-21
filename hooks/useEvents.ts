@@ -21,10 +21,18 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
   const dedupeEvents = (items: Event[]) => {
     const map = new Map<string, Event>();
     items.forEach((item) => map.set(item.id, item));
     return Array.from(map.values());
+  };
+
+  const setEventsSafe = (updater: Event[] | ((prev: Event[]) => Event[])) => {
+    setEvents((prev) => {
+      const next = typeof updater === 'function' ? (updater as (value: Event[]) => Event[])(prev) : updater;
+      return dedupeEvents(next);
+    });
   };
 
   const fetchEvents = useCallback(async () => {
@@ -32,13 +40,10 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
       setIsLoading(true);
       setError(null);
 
-      // 이전 달, 현재 달, 다음 달 모두 가져오기 (주간 뷰 경계 문제 해결)
       const prevMonth = subMonths(month, 1);
       const nextMonth = addMonths(month, 1);
       const startDate = format(startOfMonth(prevMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(nextMonth), 'yyyy-MM-dd');
-
-      console.log(`[useEvents] Fetching events from ${startDate} to ${endDate}`);
 
       const res = await fetch(`/api/events?start=${startDate}&end=${endDate}`);
 
@@ -48,8 +53,7 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
       }
 
       const data = await res.json();
-      console.log(`[useEvents] Fetched ${data.length} events`);
-      setEvents(dedupeEvents(data));
+      setEventsSafe(data);
     } catch (err) {
       console.error('[useEvents] Error fetching events:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -58,39 +62,36 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
     }
   }, [month]);
 
-  // 실시간 구독 설정
   useEffect(() => {
     fetchEvents();
 
-    // Supabase Realtime 구독
     const channel = supabase
       .channel('events-realtime')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'events' },
         (payload) => {
-          setEvents(prev => dedupeEvents([...prev, payload.new as Event]));
+          setEventsSafe((prev) => [...prev, payload.new as Event]);
         }
       )
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'events' },
         (payload) => {
-          setEvents(prev => prev.map(e => e.id === payload.new.id ? payload.new as Event : e));
+          setEventsSafe((prev) => prev.map((event) => event.id === payload.new.id ? payload.new as Event : event));
         }
       )
       .on(
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'events' },
         (payload) => {
-          setEvents(prev => prev.filter(e => e.id !== payload.old.id));
+          setEventsSafe((prev) => prev.filter((event) => event.id !== payload.old.id));
         }
       )
       .subscribe();
 
     channelRef.current = channel;
 
-    // 클린업
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
@@ -100,14 +101,13 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
 
   const createEvent = async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // 낙관적 업데이트
       const tempEvent: Event = {
         ...eventData,
         id: `temp-${Date.now()}`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      setEvents(prev => [...prev, tempEvent]);
+      setEventsSafe((prev) => [...prev, tempEvent]);
 
       const res = await fetch('/api/events', {
         method: 'POST',
@@ -116,21 +116,16 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
       });
 
       if (!res.ok) {
-        // 롤백
-        setEvents(prev => prev.filter(e => e.id !== tempEvent.id));
+        setEventsSafe((prev) => prev.filter((event) => event.id !== tempEvent.id));
         const errorData = await res.json();
         return { success: false, error: errorData.error };
       }
 
       const newEvent = await res.json();
-      // 임시 이벤트를 실제 이벤트로 교체
-      setEvents(prev => {
-        const replaced = prev.map(e => e.id === tempEvent.id ? newEvent : e);
-        return dedupeEvents([...replaced, newEvent]);
-      });
+      setEventsSafe((prev) => prev.map((event) => event.id === tempEvent.id ? newEvent : event));
       return { success: true, data: newEvent };
     } catch {
-      await fetchEvents(); // 롤백
+      await fetchEvents();
       return { success: false, error: '이벤트 생성에 실패했습니다.' };
     }
   };
@@ -150,7 +145,7 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
 
       const newEvents = await res.json();
       const newEventsArray = Array.isArray(newEvents) ? newEvents : [newEvents];
-      setEvents(prev => {
+      setEventsSafe((prev) => {
         const map = new Map(prev.map((event) => [event.id, event]));
         newEventsArray.forEach((event) => map.set(event.id, event));
         return Array.from(map.values());
@@ -158,15 +153,14 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
       return { success: true, data: newEventsArray };
     } catch {
       await fetchEvents();
-      return { success: false, error: '?대깽???앹꽦???ㅽ뙣?덉뒿?덈떎.' };
+      return { success: false, error: '이벤트 생성에 실패했습니다.' };
     }
   };
 
   const updateEvent = async (id: string, eventData: Partial<Event>) => {
     try {
-      // 낙관적 업데이트
       const originalEvents = [...events];
-      setEvents(prev => prev.map(e => e.id === id ? { ...e, ...eventData } : e));
+      setEventsSafe((prev) => prev.map((event) => event.id === id ? { ...event, ...eventData } : event));
 
       const res = await fetch('/api/events', {
         method: 'PUT',
@@ -175,39 +169,38 @@ export function useEvents(month: Date = new Date()): UseEventsReturn {
       });
 
       if (!res.ok) {
-        setEvents(originalEvents); // 롤백
+        setEventsSafe(originalEvents);
         const errorData = await res.json();
         return { success: false, error: errorData.error };
       }
 
       const updatedEvent = await res.json();
-      setEvents(prev => prev.map(e => e.id === id ? updatedEvent : e));
+      setEventsSafe((prev) => prev.map((event) => event.id === id ? updatedEvent : event));
       return { success: true, data: updatedEvent };
     } catch {
-      await fetchEvents(); // 롤백
+      await fetchEvents();
       return { success: false, error: '이벤트 수정에 실패했습니다.' };
     }
   };
 
   const deleteEvent = async (id: string) => {
     try {
-      // 낙관적 업데이트
       const originalEvents = [...events];
-      setEvents(prev => prev.filter(e => e.id !== id));
+      setEventsSafe((prev) => prev.filter((event) => event.id !== id));
 
       const res = await fetch(`/api/events?id=${id}`, {
         method: 'DELETE',
       });
 
       if (!res.ok) {
-        setEvents(originalEvents); // 롤백
+        setEventsSafe(originalEvents);
         const errorData = await res.json();
         return { success: false, error: errorData.error };
       }
 
       return { success: true };
     } catch {
-      await fetchEvents(); // 롤백
+      await fetchEvents();
       return { success: false, error: '이벤트 삭제에 실패했습니다.' };
     }
   };

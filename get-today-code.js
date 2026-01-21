@@ -1,18 +1,19 @@
-// 오늘의 Enigma 코드 확인 스크립트
-// 사용법: node get-today-code.js
+// Enigma daily code helper script
+// Usage: node get-today-code.js
 
 const crypto = require('crypto');
 
-// .env.local 파일에서 설정한 SECRET_KEY와 동일해야 함
+// Must match ENIGMA_SECRET_KEY in .env.local
 const SECRET_KEY = process.env.ENIGMA_SECRET_KEY || 'change_this_to_random_32_chars_minimum';
+const EMERGENCY_KEY = process.env.ENIGMA_EMERGENCY_KEY;
 
 function generateDailyCode(date = new Date()) {
-  const dateStr = date.toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD
+  const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
   const hash = crypto
     .createHash('sha256')
     .update(dateStr + SECRET_KEY)
     .digest('hex');
-  
+
   return hash.substring(0, 8).toUpperCase();
 }
 
@@ -24,4 +25,8 @@ console.log('📅 날짜:', today.toLocaleDateString('ko-KR'));
 console.log('🔑 오늘의 Enigma 코드:', code);
 console.log('=========================================');
 console.log('');
-console.log('💡 비상 키도 사용 가능: emergency_backup_code_2025');
+if (EMERGENCY_KEY) {
+  console.log('💡 비상 키도 사용 가능:', EMERGENCY_KEY);
+} else {
+  console.log('💡 비상 키가 설정되어 있지 않습니다.');
+}

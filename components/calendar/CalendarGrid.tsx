@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { DayPicker } from 'react-day-picker';
+import { DayPicker, type DateRange } from 'react-day-picker';
 import { ko } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 import { Event } from '@/types';
@@ -31,10 +31,28 @@ export default function CalendarGrid({
 }: CalendarGridProps) {
     const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
     const [rangeMode, setRangeMode] = useState(false);
-    const [selectedRange, setSelectedRange] = useState<{ from?: Date; to?: Date }>();
+    const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
     const [dragOverDate, setDragOverDate] = useState<Date | null>(null);
 
-    const handleRangeSelect = (range: { from?: Date; to?: Date } | undefined) => {
+    const logDnd = (...args: unknown[]) => {
+        if (typeof window === 'undefined') return;
+        const enabled = process.env.NEXT_PUBLIC_DND_DEBUG === '1' || window.location.search.includes('dndDebug=1');
+        if (enabled) {
+            console.log(...args);
+        }
+    };
+
+    const toggleRangeMode = () => {
+        setRangeMode((prev) => {
+            const next = !prev;
+            if (next) {
+                setViewMode('month');
+            }
+            return next;
+        });
+    };
+
+    const handleRangeSelect = (range: DateRange | undefined) => {
         setSelectedRange(range);
         if (range?.from) {
             onDateSelect(range.from);
@@ -76,7 +94,10 @@ export default function CalendarGrid({
                     e.preventDefault();
                     const eventId = e.dataTransfer.getData('application/x-event-id') || e.dataTransfer.getData('text/plain');
                     if (eventId) {
+                        logDnd('[DND] drop', { eventId, date: day.date.toISOString() });
                         onEventDrop(eventId, day.date);
+                    } else {
+                        logDnd('[DND] drop missing eventId', { date: day.date.toISOString() });
                     }
                     setDragOverDate(null);
                     buttonProps.onDrop?.(e);
@@ -89,7 +110,7 @@ export default function CalendarGrid({
         <div className="w-full calendar-weekend">
             {rangeMode && (
                 <div className="mb-3 rounded-lg bg-primary/10 px-3 py-2 text-xs text-primary">
-                    Drag or click to select a date range.
+                    드래그 또는 클릭으로 기간을 선택하세요.
                 </div>
             )}
             <div className="hidden md:block">
@@ -97,13 +118,13 @@ export default function CalendarGrid({
                     <div className="flex items-center justify-end gap-2 mb-2">
                         <button
                             type="button"
-                            onClick={() => setRangeMode((prev) => !prev)}
+                            onClick={toggleRangeMode}
                             className={cn(
                                 'text-xs px-3 py-1.5 rounded-md transition-all font-medium',
                                 rangeMode ? 'bg-primary text-primary-foreground' : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
                             )}
                         >
-                            {rangeMode ? 'Range: On' : 'Range: Off'}
+                            {rangeMode ? '기간 선택: 켜짐' : '기간 선택: 꺼짐'}
                         </button>
                     </div>
                 )}
@@ -141,7 +162,19 @@ export default function CalendarGrid({
             </div>
 
             <div className="md:hidden">
-                <div className="flex justify-end px-2 mb-2">
+                <div className="flex items-center justify-end gap-2 px-2 mb-2">
+                    {isAdmin && (
+                        <button
+                            type="button"
+                            onClick={toggleRangeMode}
+                            className={cn(
+                                'text-xs px-3 py-1.5 rounded-md transition-all font-medium',
+                                rangeMode ? 'bg-primary text-primary-foreground' : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
+                            )}
+                        >
+                            {rangeMode ? '기간 선택: 켜짐' : '기간 선택: 꺼짐'}
+                        </button>
+                    )}
                     <div className="bg-secondary/50 p-1 rounded-lg flex gap-1">
                         <button
                             onClick={() => setViewMode('week')}
@@ -152,7 +185,7 @@ export default function CalendarGrid({
                                     : 'text-muted-foreground hover:text-foreground'
                             )}
                         >
-                            �ְ�
+                            주간
                         </button>
                         <button
                             onClick={() => setViewMode('month')}
@@ -163,7 +196,7 @@ export default function CalendarGrid({
                                     : 'text-muted-foreground hover:text-foreground'
                             )}
                         >
-                            ����
+                            월간
                         </button>
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState, useMemo } from 'react';
+import type { DateRange } from 'react-day-picker';
 import CalendarGrid from '@/components/calendar/CalendarGrid';
 import EventModal from '@/components/modals/EventModal';
 import EventFormModal from '@/components/modals/EventFormModal';
@@ -42,7 +43,9 @@ export default function Home() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedRange, setSelectedRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [selectedRange, setSelectedRange] = useState<DateRange | null>(null);
+  const [isMoveMode, setIsMoveMode] = useState(false);
+  const [movingEventId, setMovingEventId] = useState<string | null>(null);
 
   const { isAdmin, isLoading: isAdminLoading, login, logout } = useAdmin();
   const { events, isLoading: isEventsLoading, createEvent, createEvents, updateEvent, deleteEvent } = useEvents(currentMonth);
@@ -63,10 +66,14 @@ export default function Home() {
     }
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
+  const handleDateSelect = async (date: Date | undefined) => {
+    if (!date) return;
+    if (isMoveMode && movingEventId) {
+      await handleEventDrop(movingEventId, date);
+      setMovingEventId(null);
+      return;
     }
+    setSelectedDate(date);
   };
 
   const handleEventClick = (event: Event) => {
@@ -96,7 +103,27 @@ export default function Home() {
   const handleCreateEvent = () => {
     setEditingEvent(null);
     setSelectedRange(null);
+    setIsMoveMode(false);
+    setMovingEventId(null);
     setIsFormModalOpen(true);
+  };
+
+  const toggleMoveMode = () => {
+    setIsMoveMode((prev) => {
+      const next = !prev;
+      if (!next) {
+        setMovingEventId(null);
+      }
+      return next;
+    });
+  };
+
+  const logDnd = (...args: unknown[]) => {
+    if (typeof window === 'undefined') return;
+    const enabled = process.env.NEXT_PUBLIC_DND_DEBUG === '1' || window.location.search.includes('dndDebug=1');
+    if (enabled) {
+      console.log(...args);
+    }
   };
 
   const handleEventDrop = async (eventId: string, date: Date) => {
@@ -104,12 +131,15 @@ export default function Home() {
     const targetEvent = events.find(e => e.id === eventId);
     if (!targetEvent || targetEvent.is_school_event) return;
 
+    logDnd('[DND] drop handler', { eventId, date: date.toISOString() });
     const updateData = shiftEventToDate(targetEvent, date);
     const result = await updateEvent(targetEvent.id, updateData);
     if (!result.success) {
       alert(result.error || '일정 이동에 실패했습니다.');
+      logDnd('[DND] drop failed', { eventId, error: result.error });
     } else {
       setSelectedDate(date);
+      logDnd('[DND] drop success', { eventId });
     }
   };
 
@@ -241,25 +271,38 @@ export default function Home() {
         </div>
 
         <div className="lg:col-span-4 space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2 whitespace-nowrap">
               <span className="text-primary">{selectedDate.getDate()}일</span>
-              <span className="text-muted-foreground text-base font-medium">
+              <span className="text-muted-foreground text-base font-medium whitespace-nowrap">
                 {selectedDate.toLocaleString('ko-KR', { weekday: 'long' })}
               </span>
             </h2>
             {isAdmin && (
-              <button
-                onClick={handleCreateEvent}
-                className="flex items-center gap-1 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95"
-              >
-                <Plus size={16} />
-                일정 추가
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleMoveMode}
+                  className={`px-3 py-2 rounded-full text-xs font-semibold transition-all ${isMoveMode ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'bg-secondary/60 text-muted-foreground hover:text-foreground'}`}
+                >
+                  {isMoveMode ? '이동 모드: 켜짐' : '이동 모드: 꺼짐'}
+                </button>
+                <button
+                  onClick={handleCreateEvent}
+                  className="flex items-center gap-1 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95"
+                >
+                  <Plus size={16} />
+                  일정 추가
+                </button>
+              </div>
             )}
           </div>
 
           <div className="space-y-3 min-h-[300px]">
+            {isMoveMode && (
+              <div className="rounded-lg bg-primary/10 px-3 py-2 text-xs text-primary">
+                {movingEventId ? '이동할 날짜를 선택하세요.' : '이동할 일정을 선택하세요.'}
+              </div>
+            )}
             {isEventsLoading ? (
               <>
                 <EventSkeleton />
@@ -275,8 +318,15 @@ export default function Home() {
                   >
                     <EventCard
                       event={event}
-                      onClick={() => handleEventClick(event)}
+                      onClick={() => {
+                        if (isMoveMode) {
+                          setMovingEventId(event.id);
+                          return;
+                        }
+                        handleEventClick(event);
+                      }}
                       isDraggable={isAdmin && !event.is_school_event}
+                      isSelected={movingEventId === event.id}
                     />
                   </div>
                 ))}
