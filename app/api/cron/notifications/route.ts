@@ -89,5 +89,15 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ success: true, sent, total: events?.length ?? 0 });
+  await supabaseAdmin.from('notification_log').insert({
+    type: 'cron',
+    scheduled_for: targetDateKey,
+  });
+
+  return NextResponse.json({
+    success: true,
+    sent,
+    total: events?.length ?? 0,
+    ran_for: targetDateKey,
+  });
 }

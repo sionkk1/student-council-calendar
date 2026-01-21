@@ -10,6 +10,8 @@ import AdminBar from '@/components/admin/AdminBar';
 import EventCard from '@/components/calendar/EventCard';
 import { MultiSelectFilter } from '@/components/calendar/CategoryFilter';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
+import IosInstallBanner from '@/components/IosInstallBanner';
+import MorningGreeting from '@/components/MorningGreeting';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useEvents } from '@/hooks/useEvents';
 import { eventOccursOnDate, shiftEventToDate } from '@/lib/events';
@@ -237,7 +239,7 @@ export default function Home() {
             <div className="p-2 bg-primary/10 rounded-xl text-primary">
               <CalendarIcon size={20} />
             </div>
-            <h1 className="text-xl font-bold text-foreground">학생자치 일정</h1>
+            <h1 className="text-xl font-bold text-foreground">문태고등학교 학생자치회 일정</h1>
           </div>
           <div className="flex items-center gap-2">
             <NotificationToggle />
@@ -248,9 +250,13 @@ export default function Home() {
 
       {isAdmin && <AdminBar onLogout={logout} />}
 
+      <IosInstallBanner />
+
       <div className="max-w-5xl mx-auto px-4 mt-4">
         <AnnouncementBanner isAdmin={isAdmin} />
       </div>
+
+      <MorningGreeting selectedDate={selectedDate} isAdmin={isAdmin} />
 
       <div className="max-w-5xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
         <div className="lg:col-span-8 space-y-6">
@@ -405,6 +411,10 @@ export default function Home() {
           <div className="mt-2 break-all text-muted-foreground">{dndDebugInfo}</div>
         </div>
       )}
+
+      <div className="mt-8 pb-6 text-center text-[11px] text-muted-foreground/70">
+        제작: 문태고등학교 74-1기 학생자치회 자치기획실· Crafted with care
+      </div>
     </main>
   );
 }
