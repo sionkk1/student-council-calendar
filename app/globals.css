@@ -207,8 +207,7 @@ body {
 .rdp-month_grid {
   width: 100% !important;
   table-layout: fixed !important;
-  border-collapse: separate;
-  border-spacing: 0 4px;
+  border-collapse: collapse;
 }
 
 /* 요일 헤더 행 */
@@ -221,14 +220,13 @@ body {
   font-weight: 500;
   font-size: 0.85rem;
   padding: 8px 0;
-  text-align: center;
+  text-align: center !important;
 }
 
 /* 날짜 셀 & 버튼 → 풀와이드 & 넉넉한 높이 */
 .rdp-day {
-  width: auto;
   text-align: center;
-  padding: 2px;
+  padding: 2px 0;
 }
 
 .rdp-day_button {
