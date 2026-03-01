@@ -44,7 +44,7 @@ export default function EnigmaInput({ onVerify }: EnigmaInputProps) {
             {/* Secret Trigger - 우측 하단 잠금 아이콘 */}
             <button
                 onClick={() => setIsVisible(!isVisible)}
-                className="fixed bottom-6 right-6 p-3 bg-gray-800 text-white rounded-full shadow-lg hover:bg-gray-700 transition-all z-40"
+                className="fixed bottom-6 right-6 p-3 bg-secondary text-secondary-foreground rounded-full shadow-lg hover:bg-secondary/80 transition-all z-40"
                 aria-label="Admin Access"
             >
                 <Lock size={20} />

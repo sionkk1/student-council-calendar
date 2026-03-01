@@ -125,12 +125,12 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
             />
 
             {/* Mobile: Bottom Sheet style */}
-            <div className="md:hidden fixed inset-x-0 bottom-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300 z-50">
-                <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+            <div className="md:hidden fixed inset-x-0 bottom-0 bg-background text-foreground rounded-t-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300 z-50">
+                <div className="sticky top-0 bg-background border-b border-border p-4 flex justify-between items-center">
                     <h2 className="text-lg font-semibold truncate pr-4">{event.title}</h2>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-full flex-shrink-0"
+                        className="p-2 hover:bg-muted rounded-full flex-shrink-0"
                     >
                         <X size={24} />
                     </button>
@@ -153,7 +153,7 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
                         />
                     )}
                     {event.is_school_event && (
-                        <div className="text-center text-sm text-gray-400 pt-4 border-t">
+                        <div className="text-center text-sm text-muted-foreground pt-4 border-t border-border">
                             🏫 학교 공식 일정 (수정 불가)
                         </div>
                     )}
@@ -161,10 +161,10 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
             </div>
 
             {/* Desktop: Centered Modal */}
-            <div className="hidden md:block bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
-                <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+            <div className="hidden md:block bg-background text-foreground rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
+                <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex justify-between items-center">
                     <h2 className="text-xl font-semibold">{event.title}</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+                    <button onClick={onClose} className="p-2 hover:bg-muted rounded-full">
                         <X size={20} />
                     </button>
                 </div>
@@ -186,7 +186,7 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
                         />
                     )}
                     {event.is_school_event && (
-                        <div className="text-center text-sm text-gray-400 pt-4 border-t">
+                        <div className="text-center text-sm text-muted-foreground pt-4 border-t border-border">
                             🏫 학교 공식 일정 (수정 불가)
                         </div>
                     )}
@@ -212,14 +212,14 @@ function MeetingMinutesSection({
     onDelete: (id: string) => void;
 }) {
     return (
-        <div className="border-t pt-4">
+        <div className="border-t border-border pt-4">
             <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                <h3 className="font-medium text-foreground flex items-center gap-2">
                     <FileText size={18} />
                     회의록
                 </h3>
                 {isAdmin && (
-                    <label className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm cursor-pointer hover:bg-gray-200 transition-colors">
+                    <label className="flex items-center gap-1 px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-sm cursor-pointer hover:bg-secondary/80 transition-colors">
                         <Upload size={14} />
                         {isUploading ? '업로드 중...' : '업로드'}
                         <input
@@ -238,7 +238,7 @@ function MeetingMinutesSection({
                     {minutes.map((minute) => (
                         <div
                             key={minute.id}
-                            className="flex items-center justify-between p-3 bg-white rounded-lg"
+                            className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg"
                         >
                             <div className="flex items-center gap-2 min-w-0">
                                 <FileText size={16} className="text-blue-500 flex-shrink-0" />
@@ -247,7 +247,7 @@ function MeetingMinutesSection({
                             <div className="flex items-center gap-1 flex-shrink-0">
                                 <button
                                     onClick={() => onDownload(minute)}
-                                    className="p-2 hover:bg-gray-200 rounded-full"
+                                    className="p-2 hover:bg-muted rounded-full"
                                     title="다운로드"
                                 >
                                     <Download size={16} />
@@ -266,7 +266,7 @@ function MeetingMinutesSection({
                     ))}
                 </div>
             ) : (
-                <p className="text-sm text-gray-400 text-center py-4">
+                <p className="text-sm text-muted-foreground text-center py-4">
                     등록된 회의록이 없습니다.
                 </p>
             )}
@@ -284,7 +284,7 @@ function AdminActions({
     onDelete?: (eventId: string) => void;
 }) {
     return (
-        <div className="flex gap-3 pt-4 border-t">
+        <div className="flex gap-3 pt-4 border-t border-border">
             <button
                 onClick={() => onEdit?.(event)}
                 className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors min-h-[44px]"
@@ -327,21 +327,21 @@ function EventContent({ event }: { event: Event }) {
     return (
         <>
             <div className="flex gap-4">
-                <div className="mt-1 text-gray-400">
+                <div className="mt-1 text-muted-foreground">
                     <Calendar size={20} />
                 </div>
                 <div>
-                    <p className="font-medium text-gray-900">{dateLabel}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{timeLabel}</p>
+                    <p className="font-medium text-foreground">{dateLabel}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{timeLabel}</p>
                 </div>
             </div>
 
             {event.description && (
                 <div className="flex gap-4">
-                    <div className="mt-1 text-gray-400">
+                    <div className="mt-1 text-muted-foreground">
                         <AlignLeft size={20} />
                     </div>
-                    <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    <div className="text-foreground/80 whitespace-pre-wrap leading-relaxed">
                         {event.description}
                     </div>
                 </div>
@@ -352,13 +352,13 @@ function EventContent({ event }: { event: Event }) {
                     {event.category && (
                         <span className={cn(
                             "px-3 py-1 rounded-full text-sm font-medium",
-                            event.color_tag ? `bg-[${event.color_tag}]/10 text-[${event.color_tag}]` : "bg-gray-100 text-gray-700"
+                            event.color_tag ? `bg-[${event.color_tag}]/10 text-[${event.color_tag}]` : "bg-secondary text-secondary-foreground"
                         )} style={event.color_tag ? { backgroundColor: `${event.color_tag}20`, color: event.color_tag } : {}}>
                             {event.category}
                         </span>
                     )}
                     {event.departments && event.departments.map(dept => (
-                        <span key={dept} className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                        <span key={dept} className="px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-600 dark:text-green-400">
                             {dept}
                         </span>
                     ))}

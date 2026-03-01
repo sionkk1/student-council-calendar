@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Shield, Calendar } from 'lucide-react';
+import { LogOut, Shield, Calendar, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 interface AdminBarProps {
@@ -9,10 +9,11 @@ interface AdminBarProps {
 
 export default function AdminBar({ onLogout }: AdminBarProps) {
   const [showIcalInfo, setShowIcalInfo] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const handleShare = async () => {
     const icalUrl = `${window.location.origin}/api/ical`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -25,6 +26,35 @@ export default function AdminBar({ onLogout }: AdminBarProps) {
       }
     } else {
       setShowIcalInfo(true);
+    }
+  };
+
+  const handleNeisSync = async () => {
+    const currentYear = new Date().getFullYear();
+    if (!confirm(`${currentYear}학년도 나이스 학사일정을 동기화하시겠습니까?\n(기존 자동 동기화 데이터는 덮어씌워집니다)`)) return;
+
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/admin/neis-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetYear: currentYear })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '동기화 실패');
+
+      alert(data.message);
+      // Reload the page to reflect the new events
+      window.location.reload();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert(`오류 발생: ${error.message}`);
+      } else {
+        alert('알 수 없는 오류가 발생했습니다.');
+      }
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -53,6 +83,14 @@ export default function AdminBar({ onLogout }: AdminBarProps) {
               <span className="hidden sm:inline">구독</span>
             </button>
             <button
+              onClick={handleNeisSync}
+              disabled={isSyncing}
+              className={`flex items-center gap-1 text-sm hover:text-blue-200 transition-colors min-h-[44px] px-2 ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
+              <span className="hidden sm:inline">{isSyncing ? '동기화 중...' : '나이스 동기화'}</span>
+            </button>
+            <button
               onClick={onLogout}
               className="flex items-center gap-1 text-sm hover:text-blue-200 transition-colors min-h-[44px] px-2"
             >
@@ -66,12 +104,12 @@ export default function AdminBar({ onLogout }: AdminBarProps) {
       {/* iCal 구독 안내 모달 */}
       {showIcalInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full space-y-4">
+          <div className="bg-background text-foreground rounded-xl p-6 max-w-sm w-full space-y-4">
             <h3 className="text-lg font-bold">캘린더 구독</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-sm text-muted-foreground">
               아래 URL을 복사해서 Google 캘린더, Apple 캘린더 등에서 &quot;URL로 구독 추가&quot; 하세요.
             </p>
-            <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg text-xs break-all font-mono">
+            <div className="bg-secondary text-secondary-foreground p-3 rounded-lg text-xs break-all font-mono">
               {typeof window !== 'undefined' && `${window.location.origin}/api/ical`}
             </div>
             <div className="flex gap-2">
@@ -83,7 +121,7 @@ export default function AdminBar({ onLogout }: AdminBarProps) {
               </button>
               <button
                 onClick={() => setShowIcalInfo(false)}
-                className="flex-1 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="flex-1 py-2 border border-border rounded-lg font-medium hover:bg-muted"
               >
                 닫기
               </button>

@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import type { DateRange } from 'react-day-picker';
 import CalendarGrid from '@/components/calendar/CalendarGrid';
 import EventModal from '@/components/modals/EventModal';
 import EventFormModal from '@/components/modals/EventFormModal';
@@ -45,7 +44,6 @@ export default function Home() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedRange, setSelectedRange] = useState<DateRange | null>(null);
   const [isMoveMode, setIsMoveMode] = useState(false);
   const [movingEventId, setMovingEventId] = useState<string | null>(null);
   const [isDndDebug, setIsDndDebug] = useState(false);
@@ -109,7 +107,6 @@ export default function Home() {
 
   const handleEditEvent = (event: Event) => {
     setEditingEvent(event);
-    setSelectedRange(null);
     setIsViewModalOpen(false);
     setIsFormModalOpen(true);
   };
@@ -128,7 +125,6 @@ export default function Home() {
 
   const handleCreateEvent = () => {
     setEditingEvent(null);
-    setSelectedRange(null);
     setIsMoveMode(false);
     setMovingEventId(null);
     setIsFormModalOpen(true);
@@ -172,19 +168,11 @@ export default function Home() {
     }
   };
 
-  const handleRangeSelect = (range: { from: Date; to: Date }) => {
-    if (!isAdmin) return;
-    setEditingEvent(null);
-    setSelectedRange(range);
-    setIsFormModalOpen(true);
-  };
-
   const handleFormSubmit = async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'> | Omit<Event, 'id' | 'created_at' | 'updated_at'>[]) => {
     if (Array.isArray(eventData)) {
       const result = await createEvents(eventData);
       if (result.success) {
         setIsFormModalOpen(false);
-        setSelectedRange(null);
       } else {
         alert(result.error || '생성에 실패했습니다.');
       }
@@ -266,13 +254,11 @@ export default function Home() {
               selectedDate={selectedDate}
               onDateSelect={handleDateSelect}
               onMonthChange={setCurrentMonth}
-              isAdmin={isAdmin}
               onEventDrop={handleEventDrop}
-              onRangeSelect={handleRangeSelect}
             />
           </div>
 
-          <div className="lg:hidden">
+          <div className="">
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className="w-full flex items-center justify-center gap-2 p-3 glass rounded-xl font-medium text-foreground hover:bg-white/10 transition-colors"
@@ -282,7 +268,7 @@ export default function Home() {
             </button>
           </div>
 
-          <div className={`space-y-6 transition-all duration-300 ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
+          <div className={`space-y-6 transition-all duration-300 ${isFilterOpen ? 'block' : 'hidden'}`}>
             <div className="glass rounded-2xl p-5 space-y-4">
               <MultiSelectFilter
                 label="카테고리"
@@ -312,16 +298,16 @@ export default function Home() {
               </span>
             </h2>
             {isAdmin && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-2 sm:mt-0">
                 <button
                   onClick={toggleMoveMode}
-                  className={`px-3 py-2 rounded-full text-xs font-semibold transition-all ${isMoveMode ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'bg-secondary/60 text-muted-foreground hover:text-foreground'}`}
+                  className={`px-3 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0 ${isMoveMode ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'bg-secondary/60 text-muted-foreground hover:text-foreground'}`}
                 >
                   {isMoveMode ? '이동 모드: 켜짐' : '이동 모드: 꺼짐'}
                 </button>
                 <button
                   onClick={handleCreateEvent}
-                  className="flex items-center gap-1 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95"
+                  className="flex items-center justify-center gap-1 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 whitespace-nowrap flex-shrink-0"
                 >
                   <Plus size={16} />
                   일정 추가
@@ -388,11 +374,9 @@ export default function Home() {
         onClose={() => {
           setIsFormModalOpen(false);
           setEditingEvent(null);
-          setSelectedRange(null);
         }}
         event={editingEvent}
         selectedDate={selectedDate}
-        selectedRange={selectedRange}
         onSubmit={handleFormSubmit}
       />
 

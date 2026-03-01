@@ -88,7 +88,7 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             placeholder="공지 내용을 입력하세요.."
-            className="w-full p-3 border border-yellow-300 rounded-lg resize-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none bg-white text-gray-900 dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-50"
+            className="w-full p-3 border border-yellow-300 rounded-lg resize-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none bg-background text-foreground dark:bg-yellow-950/40 dark:border-yellow-800 dark:text-yellow-50"
             rows={2}
           />
           <div className="flex gap-2 mt-2">
@@ -103,7 +103,7 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
                 setIsEditing(false);
                 setEditContent(announcement?.content || '');
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:border-yellow-700 dark:text-yellow-100 dark:hover:bg-yellow-900/40"
+              className="px-4 py-2 border border-border rounded-lg font-medium hover:bg-muted dark:border-yellow-700 dark:text-yellow-100 dark:hover:bg-yellow-900/40"
             >
               취소
             </button>
@@ -123,11 +123,11 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
 
   if (!announcement && isAdmin) {
     return (
-      <div className="bg-white border-b border-gray-200 p-2 dark:bg-slate-950/30 dark:border-white/10">
+      <div className="bg-background border-b border-border p-2 dark:bg-slate-950/30 dark:border-white/10">
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 px-2 py-1 dark:text-slate-300 dark:hover:text-white"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground px-2 py-1 dark:text-slate-300 dark:hover:text-white"
           >
             <Megaphone size={16} />
             <span>공지 작성하기</span>
