@@ -155,6 +155,8 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
                     {event.is_school_event && (
                         <div className="text-center text-sm text-muted-foreground pt-4 border-t border-border">
                             🏫 학교 공식 일정 (수정 불가)
+                            <br />
+                            수정 및 삭제는 관리자에게 문의하세요.
                         </div>
                     )}
                 </div>
@@ -188,6 +190,8 @@ export default function EventModal({ isOpen, onClose, event, isAdmin, onEdit, on
                     {event.is_school_event && (
                         <div className="text-center text-sm text-muted-foreground pt-4 border-t border-border">
                             🏫 학교 공식 일정 (수정 불가)
+                            <br />
+                            수정 및 삭제는 관리자에게 문의하세요.
                         </div>
                     )}
                 </div>

@@ -15,9 +15,10 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { useEvents } from '@/hooks/useEvents';
 import { eventOccursOnDate, shiftEventToDate } from '@/lib/events';
 import { Event } from '@/types';
-import { Plus, Calendar as CalendarIcon, Filter } from 'lucide-react';
+import { Plus, Filter, Calendar as CalendarIcon } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import NotificationToggle from '@/components/notifications/NotificationToggle';
+import Image from 'next/image';
 import { CATEGORIES, DEPARTMENTS } from '@/constants';
 
 function EventSkeleton() {
@@ -223,10 +224,14 @@ export default function Home() {
     <main className="flex-1 pb-20">
       <header className="sticky top-0 z-20 glass border-b border-white/10 px-4 py-4 backdrop-blur-md transition-all duration-300">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-xl text-primary">
-              <CalendarIcon size={20} />
-            </div>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/council-logo.png"
+              alt="학생자치회 로고"
+              width={60}
+              height={60}
+              priority
+            />
             <h1 className="text-xl font-bold text-foreground">문태고등학교 학생자치회 일정</h1>
           </div>
           <div className="flex items-center gap-2">
