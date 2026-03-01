@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Megaphone, Edit } from 'lucide-react';
 
 interface Announcement {
@@ -19,6 +19,109 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
   const [editContent, setEditContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [dismissed, setDismissed] = useState(false);
+
+  // 드래그: ref 기반 직접 DOM 조작 (React 상태 의존성 제거)
+  const fabRef = useRef<HTMLButtonElement>(null);
+  const posRef = useRef({ x: -1, y: 80, startX: 0, startY: 0, moved: 0, dragging: false });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // 초기 위치 + 리사이즈 시 화면 안에 유지
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const clampToViewport = () => {
+      const maxX = window.innerWidth - 52;
+      const maxY = window.innerHeight - 52;
+      if (posRef.current.x === -1) {
+        // 초기 위치: 오른쪽에서 16px 여백
+        posRef.current.x = Math.max(8, window.innerWidth - 60);
+      } else {
+        // 리사이즈 시 화면 밖이면 안쪽으로
+        posRef.current.x = Math.max(0, Math.min(posRef.current.x, maxX));
+        posRef.current.y = Math.max(0, Math.min(posRef.current.y, maxY));
+      }
+      if (fabRef.current) {
+        fabRef.current.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0)`;
+      }
+    };
+
+    clampToViewport();
+    window.addEventListener('resize', clampToViewport);
+    return () => window.removeEventListener('resize', clampToViewport);
+  }, [dismissed]);
+
+  const updateFabTransform = useCallback(() => {
+    if (fabRef.current) {
+      fabRef.current.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0)`;
+    }
+  }, []);
+
+  // 마우스 이벤트
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const p = posRef.current;
+    p.startX = e.clientX - p.x;
+    p.startY = e.clientY - p.y;
+    p.moved = 0;
+    p.dragging = true;
+    setIsDragging(true);
+
+    const onMove = (ev: MouseEvent) => {
+      if (!posRef.current.dragging) return;
+      const nx = Math.max(0, Math.min(ev.clientX - posRef.current.startX, window.innerWidth - 52));
+      const ny = Math.max(0, Math.min(ev.clientY - posRef.current.startY, window.innerHeight - 52));
+      posRef.current.moved += Math.abs(nx - posRef.current.x) + Math.abs(ny - posRef.current.y);
+      posRef.current.x = nx;
+      posRef.current.y = ny;
+      updateFabTransform();
+    };
+    const onUp = () => {
+      posRef.current.dragging = false;
+      setIsDragging(false);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [updateFabTransform]);
+
+  // 터치 이벤트
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0];
+    const p = posRef.current;
+    p.startX = t.clientX - p.x;
+    p.startY = t.clientY - p.y;
+    p.moved = 0;
+    p.dragging = true;
+    setIsDragging(true);
+
+    const onMove = (ev: TouchEvent) => {
+      ev.preventDefault();
+      if (!posRef.current.dragging) return;
+      const nx = Math.max(0, Math.min(ev.touches[0].clientX - posRef.current.startX, window.innerWidth - 52));
+      const ny = Math.max(0, Math.min(ev.touches[0].clientY - posRef.current.startY, window.innerHeight - 52));
+      posRef.current.moved += Math.abs(nx - posRef.current.x) + Math.abs(ny - posRef.current.y);
+      posRef.current.x = nx;
+      posRef.current.y = ny;
+      updateFabTransform();
+    };
+    const onUp = () => {
+      posRef.current.dragging = false;
+      setIsDragging(false);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
+    };
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+  }, [updateFabTransform]);
+
+  // 클릭 (드래그 아닐 때만)
+  const handleFabClick = useCallback(() => {
+    if (posRef.current.moved <= 5) {
+      setDismissed(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
 
   useEffect(() => {
     fetchAnnouncement();
@@ -81,7 +184,7 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
       <div className="bg-yellow-50 border-b border-yellow-200 p-4 dark:bg-yellow-900/30 dark:border-yellow-800">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-2 mb-2 text-yellow-800 dark:text-yellow-100">
-            <Megaphone size={18} />
+            <Megaphone size={30} />
             <span className="font-medium">공지 작성</span>
           </div>
           <textarea
@@ -129,7 +232,7 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
             onClick={() => setIsEditing(true)}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground px-2 py-1 dark:text-slate-300 dark:hover:text-white"
           >
-            <Megaphone size={16} />
+            <Megaphone size={20} />
             <span>공지 작성하기</span>
           </button>
         </div>
@@ -141,46 +244,59 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
 
   if (dismissed) {
     return (
-      <div className="bg-yellow-50 border-b border-yellow-200 py-2 px-4 dark:bg-yellow-900/30 dark:border-yellow-800">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-          <span className="text-xs text-yellow-800 dark:text-yellow-100">
-            공지가 숨겨졌습니다.
-          </span>
-          <button
-            onClick={() => setDismissed(false)}
-            className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100/80 text-yellow-900 hover:bg-yellow-200 dark:bg-yellow-800/50 dark:text-yellow-100 dark:hover:bg-yellow-700/60"
-          >
-            공지 다시 보기
-          </button>
+      <button
+        ref={fabRef}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onClick={handleFabClick}
+        className={`fixed z-40 p-3 bg-amber-500 text-white rounded-full shadow-lg cursor-grab active:cursor-grabbing ${isDragging ? '' : 'hover:brightness-110 transition-[filter] duration-200'}`}
+        style={{ left: 0, top: 0, transform: `translate3d(${typeof window !== 'undefined' ? (posRef.current.x === -1 ? window.innerWidth - 64 : posRef.current.x) : 0}px, ${posRef.current.y}px, 0)`, touchAction: 'none', willChange: isDragging ? 'transform' : 'auto' }}
+        title="공지 다시 보기 (드래그로 이동 가능)"
+      >
+        <div className="relative">
+          <Megaphone size={22} />
+          <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-amber-500" />
         </div>
-      </div>
+      </button>
     );
   }
 
   return (
-    <div className="bg-yellow-50 border-b border-yellow-200 py-3 px-4 dark:bg-yellow-900/30 dark:border-yellow-800">
-      <div className="max-w-4xl mx-auto flex items-start gap-3">
-        <Megaphone size={18} className="text-yellow-600 mt-0.5 flex-shrink-0 dark:text-yellow-300" />
-        <p className="flex-1 text-sm text-yellow-800 whitespace-pre-wrap dark:text-yellow-100">
-          {announcement.content}
-        </p>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {isAdmin && (
+    <div className="sticky top-[93px] z-10 relative overflow-hidden animate-in slide-in-from-top-2 duration-500 ease-out">
+      {/* 그라데이션 배경 + 왼쪽 강조 보더 */}
+      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border-b border-amber-200 border-l-4 border-l-amber-500 py-3.5 px-4 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-yellow-950/30 dark:border-amber-700 dark:border-l-amber-400">
+        <div className="max-w-4xl mx-auto flex items-start gap-3">
+          {/* 아이콘 + 펄스 점 */}
+          <div className="relative flex-shrink-0 mt-0.5">
+            <Megaphone size={20} className="text-amber-600 dark:text-amber-300" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+          </div>
+          {/* 공지 내용 */}
+          <div className="flex-1 min-w-0">
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">공지사항</span>
+            <p className="text-base text-amber-900 whitespace-pre-wrap mt-0.5 leading-relaxed font-medium dark:text-amber-50">
+              {announcement.content}
+            </p>
+          </div>
+          {/* 액션 버튼 */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {isAdmin && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-1.5 hover:bg-amber-200/60 rounded-full text-amber-600 transition-colors dark:text-amber-200 dark:hover:bg-amber-800/50"
+                title="수정"
+              >
+                <Edit size={16} />
+              </button>
+            )}
             <button
-              onClick={() => setIsEditing(true)}
-              className="p-1.5 hover:bg-yellow-100 rounded-full text-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-800/50"
-              title="수정"
+              onClick={() => setDismissed(true)}
+              className="p-1.5 hover:bg-amber-200/60 rounded-full text-amber-600 transition-colors dark:text-amber-200 dark:hover:bg-amber-800/50"
+              title="닫기"
             >
-              <Edit size={16} />
+              <X size={16} />
             </button>
-          )}
-          <button
-            onClick={() => setDismissed(true)}
-            className="p-1.5 hover:bg-yellow-100 rounded-full text-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-800/50"
-            title="닫기"
-          >
-            <X size={16} />
-          </button>
+          </div>
         </div>
       </div>
     </div>

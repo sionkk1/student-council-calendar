@@ -55,8 +55,7 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const enabled = process.env.NODE_ENV === 'development'
-      || process.env.NEXT_PUBLIC_DND_DEBUG === '1'
+    const enabled = process.env.NEXT_PUBLIC_DND_DEBUG === '1'
       || window.location.search.includes('dndDebug=1');
     setIsDndDebug(enabled);
   }, []);
@@ -241,13 +240,12 @@ export default function Home() {
         </div>
       </header>
 
+      <AnnouncementBanner isAdmin={isAdmin} />
+
       {isAdmin && <AdminBar onLogout={logout} />}
 
       <IosInstallBanner />
 
-      <div className="max-w-5xl mx-auto px-4 mt-4">
-        <AnnouncementBanner isAdmin={isAdmin} />
-      </div>
 
       <MorningGreeting selectedDate={selectedDate} isAdmin={isAdmin} />
 
@@ -295,7 +293,7 @@ export default function Home() {
         </div>
 
         <div className="lg:col-span-4 space-y-4">
-          <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 px-1">
             <h2 className="text-xl font-bold text-foreground flex items-center gap-2 whitespace-nowrap">
               <span className="text-primary">{selectedDate.getDate()}일</span>
               <span className="text-muted-foreground text-base font-medium whitespace-nowrap">
@@ -303,18 +301,18 @@ export default function Home() {
               </span>
             </h2>
             {isAdmin && (
-              <div className="flex items-center gap-2 mt-2 sm:mt-0">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={toggleMoveMode}
-                  className={`px-3 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0 ${isMoveMode ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'bg-secondary/60 text-muted-foreground hover:text-foreground'}`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0 ${isMoveMode ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'bg-secondary/60 text-muted-foreground hover:text-foreground'}`}
                 >
                   {isMoveMode ? '이동 모드: 켜짐' : '이동 모드: 꺼짐'}
                 </button>
                 <button
                   onClick={handleCreateEvent}
-                  className="flex items-center justify-center gap-1 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:opacity-90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 whitespace-nowrap flex-shrink-0"
+                  className="flex items-center justify-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-full text-xs font-medium hover:opacity-90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 whitespace-nowrap flex-shrink-0"
                 >
-                  <Plus size={16} />
+                  <Plus size={14} />
                   일정 추가
                 </button>
               </div>
