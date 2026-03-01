@@ -221,8 +221,8 @@ export default function Home() {
 
   return (
     <main className="flex-1 pb-20">
-      <header className="sticky top-0 z-20 glass border-b border-white/10 px-4 py-4 backdrop-blur-md transition-all duration-300">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-20 glass border-b border-white/10 py-4 backdrop-blur-md transition-all duration-300">
+        <div className="max-w-5xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image
               src="/council-logo.png"

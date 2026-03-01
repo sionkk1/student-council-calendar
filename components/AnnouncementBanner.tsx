@@ -181,8 +181,8 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
 
   if (isEditing && isAdmin) {
     return (
-      <div className="bg-yellow-50 border-b border-yellow-200 p-4 dark:bg-yellow-900/30 dark:border-yellow-800">
-        <div className="max-w-4xl mx-auto">
+      <div className="bg-yellow-50 border-b border-yellow-200 py-4 dark:bg-yellow-900/30 dark:border-yellow-800">
+        <div className="max-w-5xl mx-auto px-4">
           <div className="flex items-center gap-2 mb-2 text-yellow-800 dark:text-yellow-100">
             <Megaphone size={30} />
             <span className="font-medium">공지 작성</span>
@@ -226,13 +226,13 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
 
   if (!announcement && isAdmin) {
     return (
-      <div className="bg-background border-b border-border p-2 dark:bg-slate-950/30 dark:border-white/10">
-        <div className="max-w-4xl mx-auto">
+      <div className="bg-background border-b border-border py-2 dark:bg-slate-950/30 dark:border-white/10">
+        <div className="max-w-5xl mx-auto px-4">
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground px-2 py-1 dark:text-slate-300 dark:hover:text-white"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground py-1 dark:text-slate-300 dark:hover:text-white"
           >
-            <Megaphone size={20} />
+            <Megaphone size={16} />
             <span>공지 작성하기</span>
           </button>
         </div>
@@ -264,8 +264,8 @@ export default function AnnouncementBanner({ isAdmin }: AnnouncementBannerProps)
   return (
     <div className="sticky top-[93px] z-10 relative overflow-hidden animate-in slide-in-from-top-2 duration-500 ease-out">
       {/* 그라데이션 배경 + 왼쪽 강조 보더 */}
-      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border-b border-amber-200 border-l-4 border-l-amber-500 py-3.5 px-4 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-yellow-950/30 dark:border-amber-700 dark:border-l-amber-400">
-        <div className="max-w-4xl mx-auto flex items-start gap-3">
+      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border-b border-amber-200 border-l-4 border-l-amber-500 py-3.5 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-yellow-950/30 dark:border-amber-700 dark:border-l-amber-400">
+        <div className="max-w-5xl mx-auto px-4 flex items-start gap-3">
           {/* 아이콘 + 펄스 점 */}
           <div className="relative flex-shrink-0 mt-0.5">
             <Megaphone size={20} className="text-amber-600 dark:text-amber-300" />

@@ -67,8 +67,8 @@ export default function AdminBar({ onLogout }: AdminBarProps) {
 
   return (
     <>
-      <div className="bg-blue-600 text-white px-4 py-2">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <div className="bg-blue-600 text-white py-2">
+        <div className="max-w-5xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
             <Shield size={16} />
             <span>관리자 모드</span>
