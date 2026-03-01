@@ -182,30 +182,133 @@ body {
   animation: scale-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* React Day Picker Customization for New Theme */
+/* ===== React Day Picker v9 — Full-Width Override ===== */
 .rdp {
-  --rdp-cell-size: 45px;
   --rdp-accent-color: var(--primary);
-  --rdp-background-color: transparent;
-  margin: 0 auto;
+  --rdp-accent-background-color: var(--primary);
+  --rdp-day-height: 3rem;
+  --rdp-day-width: 100%;
+  --rdp-selected-font: inherit;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0;
 }
 
-.rdp-day_selected:not([disabled]) {
+/* 월 컨테이너 & 그리드 → 풀 와이드 */
+.rdp-months {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.rdp-month {
+  width: 100% !important;
+}
+
+.rdp-month_grid {
+  width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+
+/* 요일 헤더 행 */
+.rdp-weekdays {
+  width: 100%;
+}
+
+.rdp-weekday {
+  color: var(--muted-foreground);
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 8px 0;
+  text-align: center;
+}
+
+/* 날짜 셀 & 버튼 → 풀와이드 & 넉넉한 높이 */
+.rdp-day {
+  width: auto;
+  text-align: center;
+  padding: 2px;
+}
+
+.rdp-day_button {
+  width: 100% !important;
+  height: 3rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 캡션(월 이름) & 네비게이션 */
+.rdp-month_caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.rdp-caption_label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.rdp-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.rdp-button_previous,
+.rdp-button_next {
+  color: var(--primary);
+  border-radius: 8px;
+  padding: 4px;
+  transition: background 0.15s;
+}
+
+.rdp-button_previous:hover,
+.rdp-button_next:hover {
+  background: var(--secondary);
+}
+
+/* 선택된 날짜 */
+.rdp-selected .rdp-day_button {
   background-color: var(--primary) !important;
   color: var(--primary-foreground) !important;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.rdp-day_selected:hover:not([disabled]) {
+.rdp-selected:hover .rdp-day_button {
   background-color: var(--primary) !important;
   opacity: 0.9;
 }
 
-.rdp-day:hover:not(.rdp-day_selected) {
+/* 호버 상태 (선택 안 된 날짜) */
+.rdp-day_button:hover {
   background-color: var(--secondary) !important;
   color: var(--secondary-foreground) !important;
   border-radius: 12px;
+}
+
+.rdp-selected .rdp-day_button:hover {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+/* 오늘 표시 */
+.rdp-today .rdp-day_button {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* 바깥 달 날짜 — 흐리게 */
+.rdp-outside .rdp-day_button {
+  opacity: 0.35;
 }
 
 /* Weekend Colors */

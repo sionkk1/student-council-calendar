@@ -107,21 +107,30 @@ export default function CalendarGrid({
                             return <button {...buttonProps} data-day={day.date.toISOString()} />;
                         }
                     }}
-                    styles={{
-                        head_cell: {
-                            width: '100%',
-                            height: '40px',
-                            fontSize: '0.9rem',
-                            color: 'var(--muted-foreground)',
-                            fontWeight: 500,
-                        },
-                        table: { width: '100%', maxWidth: 'none' },
-                        day: { margin: 0, width: '100%', height: '50px' },
-                        caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
-                        nav_button: { color: 'var(--primary)' },
-                        months: { width: '100%' },
-                        month: { width: '100%' },
-                        caption_label: { fontSize: '1.2rem' },
+                    classNames={{
+                        root: 'rdp w-full',
+                        months: 'rdp-months w-full',
+                        month: 'rdp-month w-full',
+                        month_grid: 'rdp-month_grid w-full table-fixed',
+                        weekdays: 'rdp-weekdays',
+                        weekday: 'rdp-weekday',
+                        week: 'rdp-week',
+                        day: 'rdp-day',
+                        day_button: 'rdp-day_button w-full h-12',
+                        month_caption: 'rdp-month_caption',
+                        caption_label: 'rdp-caption_label text-lg',
+                        nav: 'rdp-nav',
+                        button_next: 'rdp-button_next',
+                        button_previous: 'rdp-button_previous',
+                        chevron: 'rdp-chevron',
+                        selected: 'rdp-selected',
+                        today: 'rdp-today',
+                        outside: 'rdp-outside',
+                        disabled: 'rdp-disabled',
+                        hidden: 'rdp-hidden',
+                        range_start: 'rdp-range_start',
+                        range_middle: 'rdp-range_middle',
+                        range_end: 'rdp-range_end',
                     }}
                 />
             </div>
@@ -187,21 +196,30 @@ export default function CalendarGrid({
                                     return <button {...buttonProps} data-day={day.date.toISOString()} />;
                                 }
                             }}
-                            styles={{
-                                head_cell: {
-                                    width: '100%',
-                                    height: '40px',
-                                    fontSize: '0.9rem',
-                                    color: 'var(--muted-foreground)',
-                                    fontWeight: 500,
-                                },
-                                table: { width: '100%', maxWidth: 'none' },
-                                day: { margin: 0, width: '100%', height: '40px' },
-                                caption: { color: 'var(--primary)', fontWeight: 'bold', marginBottom: '1rem' },
-                                nav_button: { color: 'var(--primary)' },
-                                months: { width: '100%' },
-                                month: { width: '100%' },
-                                caption_label: { fontSize: '1.2rem' },
+                            classNames={{
+                                root: 'rdp w-full',
+                                months: 'rdp-months w-full',
+                                month: 'rdp-month w-full',
+                                month_grid: 'rdp-month_grid w-full table-fixed',
+                                weekdays: 'rdp-weekdays',
+                                weekday: 'rdp-weekday',
+                                week: 'rdp-week',
+                                day: 'rdp-day',
+                                day_button: 'rdp-day_button w-full',
+                                month_caption: 'rdp-month_caption',
+                                caption_label: 'rdp-caption_label text-lg',
+                                nav: 'rdp-nav',
+                                button_next: 'rdp-button_next',
+                                button_previous: 'rdp-button_previous',
+                                chevron: 'rdp-chevron',
+                                selected: 'rdp-selected',
+                                today: 'rdp-today',
+                                outside: 'rdp-outside',
+                                disabled: 'rdp-disabled',
+                                hidden: 'rdp-hidden',
+                                range_start: 'rdp-range_start',
+                                range_middle: 'rdp-range_middle',
+                                range_end: 'rdp-range_end',
                             }}
                         />
                     </div>
